@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  llama:
+    image: llama_model
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8000"
+    volumes:
+      - /Users/andrea/Desktop/PhD/Projects/Current/Reddit/model:/var/model
+    environment:
+      - USE_MLOCK=0
+      - MODEL=/var/model/llama-2-7b.Q4_K_M.gguf
+    cap_add:
+      - SYS_RESOURCE
+
+  chroma:
+    image: chromadb/chroma:latest
+    environment:
+      - IS_PERSISTENT=TRUE
+    volumes:
+      # Default configuration for persist_directory in chromadb/config.py
+      # Currently it's located in "/chroma/chroma/"
+      - chroma_data:/chroma/chroma/
+    ports:
+      - "8000:8000"
+
+volumes:
+  chroma_data:
