@@ -12,11 +12,13 @@ Save the llama model in a folder on your computer. I call /path/to/llama/model t
 ### Step 3
 Change the docker-compose.yml file to point to the correct location for your llama model, i.e., the folder of the llama-2-7b-chat.Q2_K.gguf file. 
 Specifically, replace this line
-```    volumes:
+```    
+     volumes:
       - /Users/andrea/Desktop/PhD/Projects/Current/Reddit/model:/var/model
   ```
 with this line:
-```    volumes:
+```   
+     volumes:
       - /path/to/llama/model:/var/model
   ```
 
