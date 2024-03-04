@@ -1,4 +1,4 @@
-Llama + chorma db setup
+# Llama + Chroma docker step-by-step guide
 
 In order to run this project you need to do the following:
 
