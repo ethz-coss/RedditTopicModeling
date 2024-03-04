@@ -1,6 +1,6 @@
 # Llama + Chroma docker step-by-step guide
 
-In order to run this project you need to do the following:
+In order to run llama and chroma in a docker container, you need to follow these steps.
 
 ### Step 1
 Install docker (https://docs.docker.com/get-docker/)
