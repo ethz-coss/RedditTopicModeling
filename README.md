@@ -3,14 +3,15 @@ Llama + chorma db setup
 In order to run this project you need to do the following:
 
 ### Step 1
-1. Install docker (https://docs.docker.com/get-docker/)
+Install docker (https://docs.docker.com/get-docker/)
 
 ### Step 2
 Download the LLama model from Hugging Face (https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/blob/main/llama-2-7b-chat.Q2_K.gguf).
 Save the llama model in a folder on your computer. I call /path/to/llama/model the absolute path to the folder where the llama model is saved.
 
 ### Step 3
-Change the docker-compose.yml file to point to the correct location for your llama model. Specifically, replace this line
+Change the docker-compose.yml file to point to the correct location for your llama model, i.e., the folder of the llama-2-7b-chat.Q2_K.gguf file. 
+Specifically, replace this line
 ```    volumes:
       - /Users/andrea/Desktop/PhD/Projects/Current/Reddit/model:/var/model
   ```
@@ -21,7 +22,10 @@ with this line:
 
 ### Step 4
 Open a terminal and navigate to the folder where the docker-compose.yml file is located. Then run the following command:
+
 ```docker-compose up```
+
+Magic should happen and you should see the services starting.
 
 ### Step 5
 You now have all the services running. 
