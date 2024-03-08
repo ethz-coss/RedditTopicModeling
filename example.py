@@ -32,7 +32,7 @@ def insert(vid: str, sentence: str, embedding: np.ndarray) -> None:
         ids=[vid],
         embeddings=[embedding.tolist()],
         documents=[sentence],
-        a=1
+        a=0
     )
 
 
