@@ -46,7 +46,7 @@ def run_data_embedd():
 
 
 # queries collection
-def query(query_text: str, content: str):
+def query(query_text: str, content: str, n: int):
     global chunked_documents
     print("collection count: ", collection.count())
     print("query text: ", query_text)
@@ -55,7 +55,7 @@ def query(query_text: str, content: str):
     embedding = example.get_embedding(query_text)
     results = collection.query(
         query_embeddings=[embedding.tolist()],
-        n_results=10,
+        n_results=n,
         # where={"metadata_field": "is_equal_to_this"},
         where_document={"$contains": content}
     )
@@ -65,6 +65,7 @@ def query(query_text: str, content: str):
 
 def reset_hp_database():
     example.chroma_client.delete_collection("harry_potter_100")
+
 
 # prints id, distance, text
 def print_query_results(results):
@@ -83,10 +84,10 @@ if __name__ == '__main__':
 
     # now we can set a query
     query_text = "where is Hogwarts?"
-    # can set a string that you want to appear in the answers
+    # string that you want to appear in the answers
     contains = " "
+    # amount of answers
+    n = 10
 
-    results = query(query_text=query_text, content=contains)
-    print_query_results(results=results) # id, distance, text
-
-
+    results = query(query_text=query_text, content=contains, n=n)
+    print_query_results(results=results)  # id, distance, text
