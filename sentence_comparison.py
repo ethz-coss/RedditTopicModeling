@@ -30,6 +30,7 @@ def query(query_text: str, content: str, n: int):
         # where={"metadata_field": "is_equal_to_this"},
         where_document={"$contains": content}
     )
+
     print_query_results(results=results)
 
 

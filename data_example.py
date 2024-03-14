@@ -15,7 +15,7 @@ collection = example.chroma_client.get_or_create_collection("harry_potter_100")
 chunked_documents = []
 
 
-# splits documents in Data_Dir and saves them in chuncked_documents:[Documents]
+# splits documents in DATA_DIR and saves them in chunked_documents:[Documents]
 def split_pdf_document():
     global chunked_documents
     # load pdf documents under DATA_DIR path
@@ -28,11 +28,11 @@ def split_pdf_document():
     print("len chuncked docs: ", len(chunked_documents))
 
 
-# embedds data in chuncked_documents and stores in collection
+# embeds data in chunked_documents and stores in collection
 def run_data_embedd():
     global chunked_documents
 
-    for i in range(1596, len(chunked_documents)):
+    for i in range(2197, len(chunked_documents)):
         # getting embedding and adding vector to collection
         embedding = example.get_embedding(chunked_documents[i].page_content)
         collection.add(
@@ -69,25 +69,25 @@ def reset_hp_database():
 
 # prints id, distance, text
 def print_query_results(results):
-    # print("results: ", results)
+    print("results: ", results)
     ids = results["ids"][0]
     distances = results["distances"][0]
+    documents = results["documents"][0]
     for i in range(len(ids)):
-        print(ids[i], distances[i], chunked_documents[int(ids[i])].page_content)
+        print(ids[i], distances[i], documents[i])
 
 
 if __name__ == '__main__':
     # prepare data
-    print(collection.count())
-    split_pdf_document()
-    # run_data_embedd()
+    #split_pdf_document()
+    #run_data_embedd()
 
     # now we can set a query
     query_text = "where is Hogwarts?"
     # string that you want to appear in the answers
     contains = " "
     # amount of answers
-    n = 10
+    n = 3
 
     results = query(query_text=query_text, content=contains, n=n)
     print_query_results(results=results)  # id, distance, text
