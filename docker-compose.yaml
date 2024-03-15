@@ -9,10 +9,10 @@ services:
     ports:
       - "5000:8000"
     volumes:
-      - /Users/andrea/Desktop/PhD/Projects/Current/Reddit/model:/var/model
+      - C:\Users\victo\PycharmProjects\RedditProject\model:/var/model
     environment:
       - USE_MLOCK=0
-      - MODEL=/var/model/llama-2-7b.Q4_K_M.gguf
+      - MODEL=/var/model/llama-2-7b-chat.Q2_K.gguf
     cap_add:
       - SYS_RESOURCE
 

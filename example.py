@@ -28,13 +28,13 @@ def get_embedding(sentence: str) -> np.ndarray:
 
 def insert(vid: str, sentence: str, embedding: np.ndarray) -> None:
     collection = chroma_client.get_or_create_collection(name="my_collection")
+    print("my_collection count: ", collection.count())
     collection.add(
         ids=[vid],
         embeddings=[embedding.tolist()],
         documents=[sentence],
-
     )
-
+    print(collection.count())
 
 def peek():
     print(chroma_client.get_collection(name="my_collection").peek())

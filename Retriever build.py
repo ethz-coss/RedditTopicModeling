@@ -1,18 +1,9 @@
-import numpy as np
 from chromadb import EmbeddingFunction, Documents
-import example
-from langchain_core.embeddings import Embeddings
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.embeddings import Embeddings
-
+import numpy as np
 import example
-from langchain_community.document_loaders import (
-    DirectoryLoader,
-    TextLoader,
-    PyPDFLoader,
-)
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-import chromadb
+
 
 
 class MyEmbeddingFunction(EmbeddingFunction):
@@ -40,19 +31,29 @@ if __name__ == '__main__':
         embedding_function=MyEmbeddingFunction()
     )
 
-    query_text = "Philosopher’s Stone"
-    print(example.get_embedding(query_text))
+    query_text = "Harry Potter"
+    embedding_vector = example.get_embedding(query_text)
+    print(embedding_vector)
 
+    print("collection count: ", db._collection.count())
     retriever1 = db.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={'score_threshold': 0.99})
 
     docs = retriever1.get_relevant_documents(query_text)
     print(len(docs))
-    #print(docs[0].page_content)
-
+    # print(docs[0].page_content)
 
     retriever2 = db.as_retriever(search_kwargs={"k": 3})
     docs = retriever2.get_relevant_documents(query_text)
     print(len(docs))
     print(docs)
+
+    docs = db.asimilarity_search_by_vector(
+        embedding= embedding_vector.tolist(),
+        search_type="similarity_score_threshold",
+        search_kwargs={'score_threshold': 0.99})
+
+    print(docs)
+
+
