@@ -49,7 +49,8 @@ if __name__ == '__main__':
 
     docs = retriever1.get_relevant_documents(query_text)
     print(len(docs))
-    # print(docs[0].page_content)
+    #print(docs[0].page_content)
+
 
     retriever2 = db.as_retriever(search_kwargs={"k": 3})
     docs = retriever2.get_relevant_documents(query_text)
