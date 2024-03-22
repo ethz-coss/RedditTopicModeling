@@ -34,7 +34,7 @@ def split_pdf_document():
 def run_data_embedd():
     global chunked_documents
 
-    for i in range(2501, len(chunked_documents)):
+    for i in range(0, len(chunked_documents)):
         # getting embedding and adding vector to collection
         embedding = example.get_embedding(chunked_documents[i].page_content)
         hp_collection.add(
@@ -89,16 +89,16 @@ def get_distance(text1:str, text2:str):
 
 if __name__ == '__main__':
     # prepare data
-    # split_pdf_document()
+    split_pdf_document()
     run_data_embedd()
     #print(get_distance("The dog is brown", "what does the animal look like?"))
 
     # now we can set a query
-    query_text = "Philosopher’s Stone"
+    query_text = "Hogwarts"
     # string that you want to appear in the answers
-    contains = " "
+    contains = "Harry"
     # amount of answers
-    n = 3
+    n = 10
 
     results = query_hp(query_text=query_text, content=contains, n=n)
     print_query_results(results=results)  # id, distance, text

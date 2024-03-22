@@ -49,7 +49,7 @@ def print_query_results(results):
 
 
 if __name__ == '__main__':
-    #reset_database()
+    reset_database()
     collection2 = example.chroma_client.get_or_create_collection("random_sentence")
 
     #adding 4 sentences
