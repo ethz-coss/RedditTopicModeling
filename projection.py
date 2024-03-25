@@ -91,8 +91,6 @@ def embeddings_from_collection(collection_name:str):
     embedds = stored["embeddings"]
     meta = stored["metadatas"]
 
-    pairsort(meta,embedds)
-
     print("getting vectors: ", len(meta))
 
     M_embedd = np.zeros((len(embedds),EMBEDDING_DIM))
@@ -108,28 +106,30 @@ def project_embedding(axis, vector):
 
 #histogramm functions
 def split_by_source(values, meta):
+
+    pairsort_source(meta,values)
     legend = []
     split_data = []
     i=0
     i_old = 0
     while i<len(values):
-        s = meta[i]["source"]
+        s = meta[i]
         legend.append(s)
 
-        while (i<len(values)) and (meta[i]["source"] == s):
+        while (i<len(values)) and (meta[i] == s):
             i+=1
 
         split_data.append(values[i_old:i])
         i_old = i
     return split_data, legend
 
-def pairsort(meta, embedds):
+def pairsort_source(meta, embedds):
     pairt=[(meta[i]["source"],embedds[i]) for i in range(0,len(embedds))]
     pairt.sort()
 
     for i in range(0,len(embedds)):
         meta[i]= pairt[i][0]
-        embedds = pairt[i][1]
+        embedds[i] = pairt[i][1]
 
 def show_hist(values):
     print("starting histogramm")
@@ -160,8 +160,9 @@ def show_stacked_hist(values, meta):
     
     # Display the plot
     plt.show()
-    
 
+
+#running th projections
 def run_projection():
     ref1 = "./data/psych"
     ref2 = "./data/math"
@@ -182,8 +183,8 @@ def run_projection():
     axis = create_axis(avg_psych, avg_math)
     print("axis: ", axis)
 
-    M_embedd, metadata = new_load_embeddings(source=data, collection_name="data-mixed-articles")
-    #M_embedd, metadata = embeddings_from_collection("data-mixed-articles")
+    #M_embedd, metadata = new_load_embeddings(source=data, collection_name="data-mixed-articles")
+    M_embedd, metadata = embeddings_from_collection("data-mixed-articles")
     #M_embedd, metadata = embeddings_from_collection("data-math-heavy-articles")
     
     values = np.zeros(len(M_embedd[:,0]))
@@ -191,6 +192,13 @@ def run_projection():
     for i in range(0, len(M_embedd[:,0])):
         z = project_embedding(axis, M_embedd[i, :])
         values[i] = z  # saves all values
+    
+    z = project_embedding(axis,avg_psych)
+    y = project_embedding(axis, avg_math)
+    
+    print("psych avg:", z)
+    print("math avg:", y)
+
 
     show_stacked_hist(values, metadata)
   
@@ -216,8 +224,8 @@ def run_normalized_projection():
     print("axis: ", axis)
 
     #M_embedd, metadata = new_load_embeddings_n(source=data, collection_name="data-mixed-articles-n")
-    M_embedd, metadata = embeddings_from_collection("data-mixed-articles-n")
-    #M_embedd, metadata = embeddings_from_collection("data-math-heavy-articles-n")
+    #M_embedd, metadata = embeddings_from_collection("data-mixed-articles-n")
+    M_embedd, metadata = embeddings_from_collection("data-math-heavy-articles-n")
     
     # project all vectors and create histogram
     values = np.zeros(len(M_embedd[:,0]))
@@ -236,10 +244,7 @@ def run_normalized_projection():
     show_stacked_hist(values, metadata)
 
 if __name__ == '__main__':
-   
-    example.chroma_client.delete_collection("data-mixed-articles")
-
-    run_projection()
+    run_normalized_projection()
      
    
 
