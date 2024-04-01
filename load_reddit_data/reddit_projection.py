@@ -70,6 +70,7 @@ def new_load_embeddings(source: str, collection_name: str):
             embeddings=[embedding.tolist()],
             metadatas=[meta[i]]
         )
+
         if i % 10 == 0:
             print(collection.count())
 
