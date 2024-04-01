@@ -2,12 +2,12 @@ import json
 import logging
 import os
 from typing import Any
+import numpy as np
 
 import projection
 from zst_io import read_lines_zst
-
 import example
-import numpy as np
+
 
 # EMBEDDING_DIM = 5120 # for 13 B model
 EMBEDDING_DIM = 4096  # for 7B model
@@ -56,15 +56,20 @@ def relevant_data(lines):
             & {'subreddit', 'score', 'num_comments', 'wls'}}
 
 
-def new_load_embeddings(source: str, collection_name: str):
+def new_load_embeddings_n(source: str, collection_name: str):
     lines = example_read_data(source)
     collection = example.chroma_client.get_or_create_collection(collection_name)
     meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
 
     print("lines: ", len(lines))
-    for i in range(0, len(lines)):
+    for i in range(190, len(lines)):
+        # print(lines[i]['title'])
+        # print(meta[i])
+
+        if None in meta[i].values(): continue
         # getting embedding and adding vector to collection
         embedding = example.get_embedding(lines[i]['title'])
+        embedding = embedding / np.linalg.norm(embedding)
         collection.add(
             ids=[str(i)],
             embeddings=[embedding.tolist()],
@@ -99,26 +104,37 @@ if __name__ == '__main__':
     collection_name = 'Reddit-Comments'
 
     # embedds all comments in the file and saves them in a collection
-   # new_load_embeddings(source=input_file, collection_name=collection_name)
+    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
-    ref_0 = ['Democrats']  # left of axis
+    ref_0 = ['climatechange', 'Feminism']  # left of axis
     ref_1 = ['Republican']  # right end of axis
-    data = ['Feminism', 'nra']  # what we are projecting
+    data = ['Republican', 'Democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
+            'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
+            'backpacking']
+    # what we are projecting
 
     # extracts embeddings only for comments in a certain subreddit, and creates axis between ref0 and ref1
     M_embedd, meta0 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_0)
-    avg_0 = projection.average_embedding(M_embedd)
+    avg_0 = projection.average_embedding_n(M_embedd)
 
     M_embedd, meta1 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_1)
-    avg_1 = projection.average_embedding(M_embedd)
+    avg_1 = projection.average_embedding_n(M_embedd)
 
-    axis = projection.create_axis(avg_0, avg_1)  # goes from 0 to 1
+    axis = projection.create_axis_n(avg_0, avg_1)  # goes from 0 to 1
     print("axis: ", axis)
+    print("avg_0: ", projection.project_embedding(axis, avg_0.transpose()))
+    print("avg_1: ", projection.project_embedding(axis, avg_1.transpose()))
 
     # extract comments from subreddits we want to project and project them
     M_embedd, meta_data = embeddings_from_collection(collection_name=collection_name, subreddits=data)
+    print(M_embedd.shape, axis.shape)
 
-    results = np.matmul(M_embedd, axis)
+    results = np.matmul(M_embedd, axis.transpose())
 
-    projection.show_hist(results)
+    # I should find a smarter way to do this
+    results = [float(x[0]) for x in results]
+
+    print(results)
+
+    projection.show_stacked_hist(results, meta_data, "subreddit")
