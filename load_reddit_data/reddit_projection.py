@@ -99,11 +99,11 @@ if __name__ == '__main__':
     collection_name = 'Reddit-Comments'
 
     # embedds all comments in the file and saves them in a collection
-    new_load_embeddings(source=input_file, collection_name=collection_name)
+   # new_load_embeddings(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
-    ref_0 = 'Democrats'  # left of axis
-    ref_1 = 'Republican'  # right end of axis
+    ref_0 = ['Democrats']  # left of axis
+    ref_1 = ['Republican']  # right end of axis
     data = ['Feminism', 'nra']  # what we are projecting
 
     # extracts embeddings only for comments in a certain subreddit, and creates axis between ref0 and ref1
