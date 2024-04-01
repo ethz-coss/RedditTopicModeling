@@ -20,22 +20,7 @@ def example_read_data(input_file_name: str) -> pd.DataFrame:
     # Mostly for logging purposes
     bad_lines, file_lines, file_bytes_processed = 0, 0, 0
     file_size = os.stat(input_file_name).st_size
-    subr = ['Republican',
-            'Democrats',
-            'healthcare',
-            'Feminism',
-            'nra',
-            'education',
-            'climatechange',
-            'politics',
-            'random',
-            'progressive',
-            'The_Donald',
-            'TrueChristian',
-            'Trucks',
-            'teenagers',
-            'AskMenOver30',
-            'backpacking']
+
     # Loop through every line in the file
     for line, file_bytes_processed in read_lines_zst(file_name=input_file_name):
         try:
@@ -43,11 +28,10 @@ def example_read_data(input_file_name: str) -> pd.DataFrame:
             line_json = json.loads(line)
 
             # Do whatever you want with the line (here I print the title of the submission with some other metadata if it in the nra subreddit and then add it to the interesting_lines list)
-            if line_json['subreddit'] in subr:
-                subr.remove(line_json['subreddit'])
+            if line_json['subreddit'] == 'nra':
+                print(line_json)
                 #print('Title:', line_json['title'], 'Author:', line_json['author'], 'Subreddit:',
                       #line_json['subreddit'], 'Upvotes:', line_json['score'])
-
 
                 interesting_lines.append(line_json)
 

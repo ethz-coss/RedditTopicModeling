@@ -53,7 +53,7 @@ def example_read_data(input_file_name: str) -> list[Any]:
 def relevant_data(lines):
     # choose metadata values
     return {key: lines[key] for key in lines.keys()
-            & {'subreddit', 'score', 'num_comments', 'wls'}}
+            & {'subreddit', 'score', 'num_comments', 'wls','upvote_ratio', 'is_original_content'}}
 
 
 def new_load_embeddings_n(source: str, collection_name: str):
@@ -103,8 +103,10 @@ if __name__ == '__main__':
     input_file = 'C:/Users/victo/PycharmProjects/RedditProject/data/RS_2020-06_filtered.zst'
     collection_name = 'Reddit-Comments'
 
+
     # embedds all comments in the file and saves them in a collection
-    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
+    example.chroma_client.delete_collection(collection_name)
+    new_load_embeddings_n(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
     ref_0 = ['climatechange', 'Feminism']  # left of axis
