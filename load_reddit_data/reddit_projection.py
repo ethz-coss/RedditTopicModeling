@@ -62,7 +62,7 @@ def new_load_embeddings_n(source: str, collection_name: str):
     meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
 
     print("lines: ", len(lines))
-    for i in range(0, len(lines)):
+    for i in range(collection.count() -1, len(lines)):
         
         if None in meta[i].values(): continue
         # getting embedding and adding vector to collection
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     collection_name = 'Reddit-Comments'
 
     # embedds all comments in the file and saves them in a collection
-    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
+    new_load_embeddings_n(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
     ref_0 = ['progressive']  # left of axis
