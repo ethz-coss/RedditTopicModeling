@@ -1,10 +1,25 @@
 import example
-import data_splitter
-
 import numpy as np
 import matplotlib.pyplot as plt
+from langchain_community.document_loaders import (
+    DirectoryLoader,
+    TextLoader,
+    PyPDFLoader,
+)
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 EMBEDDING_DIM = 5120
+
+
+def split_pdf_document(data_path: str):
+    # load pdf documents under DATA_DIR path
+    text_loader = DirectoryLoader(data_path, glob="**/*.pdf", loader_cls=PyPDFLoader)
+    loaded_documents = text_loader.load()
+    print("documents loaded")
+    # split documents into chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=120, chunk_overlap=0)
+    chunked_documents = text_splitter.split_documents(loaded_documents)
+    return chunked_documents
 
 
 def data_embedd(chunked_documents):
@@ -53,7 +68,7 @@ def create_axis_n(vec_1, vec_2):
 
 
 def new_load_embeddings(source: str, collection_name: str):
-    chunked_documents = data_splitter.split_pdf_document(source)
+    chunked_documents = split_pdf_document(source)
     print("chunked documents: ", len(chunked_documents))
     M_embedd = data_embedd(chunked_documents)
 
@@ -64,7 +79,7 @@ def new_load_embeddings(source: str, collection_name: str):
 
 
 def new_load_embeddings_n(source: str, collection_name: str):
-    chunked_documents = data_splitter.split_pdf_document(source)
+    chunked_documents = split_pdf_document(source)
     print("chunked documents: ", len(chunked_documents))
     M_embedd = data_embedd_n(chunked_documents)
 
@@ -106,34 +121,12 @@ def embeddings_from_collection(collection_name: str):
     return M_embedd, meta
 
 
-def embeddings_from_collection_2(collection_name: str, sources):
-    # get all vectors from collection and save them in matrix
-    collection = example.chroma_client.get_or_create_collection(collection_name)
-    stored = collection.get(
-        ids=[str(i) for i in range(0, collection.count())],
-        include=["embeddings", "metadatas"],
-        where={"source": {"$in": sources}}
-    )
-    embedds = stored["embeddings"]
-    meta = stored["metadatas"]
-
-    print("getting vectors: ", len(meta))
-
-    M_embedd = np.matrix(embedds)
-
-    """
-    M_embedd = np.zeros((len(embedds), EMBEDDING_DIM))
-    for i in range(0, len(embedds)):
-        M_embedd[i, :] = embedds[i]
-    """
-    return M_embedd, meta
-
 def project_embedding(axis, vector):
     return np.dot(axis, vector)
 
 
 # histogramm functions
-def split_by_attribute(values, meta, attribute:str):
+def split_by_attribute(values, meta, attribute: str):
     pairsort(meta, values, attribute)
     legend = []
     split_data = []
@@ -151,7 +144,7 @@ def split_by_attribute(values, meta, attribute:str):
     return split_data, legend
 
 
-def pairsort(meta, embedds, attribute:str):
+def pairsort(meta, embedds, attribute: str):
     pairt = [(meta[i][attribute], embedds[i]) for i in range(0, len(embedds))]
     pairt.sort()
 
@@ -174,11 +167,51 @@ def show_hist(values):
     plt.show()
 
 
-def show_stacked_hist(values, meta, attribute):
+def get_average_attribute(num_bins: int, values, meta, attribute: str):
+    # pairsort values, meta by values
+    pairt = [(values[i], meta[i][attribute]) for i in range(0, len(values))]
+    pairt.sort()
+
+    for i in range(0, len(values)):
+        values[i] = pairt[i][0]
+        meta[i] = pairt[i][1]
+
+    #print(values)
+    #calculate avarage for each bin
+    width = (values[len(values) - 1] - values[0]) / num_bins
+    print("width: ", width)
+    stop = values[0] + width
+    avgs = []
+    i = 0  # iterator
+    c = 0  # number of entries in bin
+    sum = 0  # sum over current bin
+    
+    while i < len(values):
+        #print(stop, values[i])
+        while values[i] < stop or i == len(values) - 1:
+            sum += meta[i]
+            c += 1
+            i += 1
+            if i == len(values):
+                break
+
+        avgs.append(sum / c) if c != 0 else avgs.append(0)
+        c = 0
+        sum = 0
+        stop += width
+
+    return avgs
+    # adjust last sum
+
+
+def show_stacked_hist(values, meta, attribute, num_bins):
+    avgs = get_average_attribute(num_bins, values, meta.copy(), attribute="wls")
+    print("avgs: ", avgs)
+
     split_data, legend = split_by_attribute(values, meta, attribute)
-    print(legend)
-    print(split_data)
-    plt.hist(split_data, bins=30, stacked=True, edgecolor='black')
+    #print(legend)
+    #print(split_data)
+    plt.hist(split_data, bins=num_bins, stacked=True, edgecolor='black')
 
     # Adding labels and title
     plt.xlabel('Values')
@@ -188,6 +221,16 @@ def show_stacked_hist(values, meta, attribute):
     # Adding legend
     plt.legend(legend)
 
+    # try showing average wls for every bin
+    """
+    try:
+        w= 0.5/num_bins
+        bin_centers = [(i*w-0.25) for i in range(0,num_bins)]
+        for avg, bin_center in zip(avgs, bin_centers):
+            plt.annotate(text=str(int(avg)), xy=(bin_center, 0.5))
+    except Exception as error:
+        print(error)
+    """
     # Display the plot
     plt.show()
 
@@ -199,7 +242,7 @@ def run_projection():
     data = "./data/mixed-articles"
 
     # M_embedd, meta = new_load_embeddings(source=ref1, collection_name="ref1")
-    M_embedd, meta = embeddings_from_collection("ref1",)
+    M_embedd, meta = embeddings_from_collection("ref1", )
     avg_psych = average_embedding(M_embedd)
     print("avg: ", avg_psych)
 
@@ -227,7 +270,7 @@ def run_projection():
     print("psych avg:", z)
     print("math avg:", y)
 
-    show_stacked_hist(values, metadata,"source")
+    show_stacked_hist(values, metadata, "source", num_bins=30)
 
 
 def run_normalized_projection():
@@ -235,7 +278,7 @@ def run_normalized_projection():
     ref2 = "./data/math"
     data = "./data/mixed-articles"
 
-    #M_embedd, meta = new_load_embeddings_n(source=ref1, collection_name="ref1-n")
+    # M_embedd, meta = new_load_embeddings_n(source=ref1, collection_name="ref1-n")
     M_embedd, meta = embeddings_from_collection("ref1-n")
     avg_psych = average_embedding_n(M_embedd)
     print("avg: ", avg_psych)
@@ -266,7 +309,7 @@ def run_normalized_projection():
     print("psych avg:", z)
     print("math avg:", y)
 
-    show_stacked_hist(values, metadata,"source")
+    show_stacked_hist(values, metadata, "source", num_bins=30)
 
 
 if __name__ == '__main__':

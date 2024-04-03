@@ -3,14 +3,14 @@ import logging
 import os
 from typing import Any
 import numpy as np
-
+import example
 import projection
 from zst_io import read_lines_zst
-import example
 
 
-# EMBEDDING_DIM = 5120 # for 13 B model
-EMBEDDING_DIM = 4096  # for 7B model
+
+EMBEDDING_DIM = 5120 # for 13 B model
+#EMBEDDING_DIM = 4096  # for 7B model
 
 # Create a logger to output progress in a pretty way
 logger = logging.getLogger('example_logger')
@@ -62,10 +62,8 @@ def new_load_embeddings_n(source: str, collection_name: str):
     meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
 
     print("lines: ", len(lines))
-    for i in range(190, len(lines)):
-        # print(lines[i]['title'])
-        # print(meta[i])
-
+    for i in range(0, len(lines)):
+        
         if None in meta[i].values(): continue
         # getting embedding and adding vector to collection
         embedding = example.get_embedding(lines[i]['title'])
@@ -76,11 +74,11 @@ def new_load_embeddings_n(source: str, collection_name: str):
             metadatas=[meta[i]]
         )
 
-        if i % 10 == 0:
+        if i % 1000 == 0:
             print(collection.count())
 
 
-def embeddings_from_collection(collection_name: str, subreddits: [str]):
+def embeddings_from_collection(collection_name: str, subreddits):
     # get all vectors from collection and save them in matrix
     collection = example.chroma_client.get_or_create_collection(collection_name)
     stored = collection.get(
@@ -88,32 +86,32 @@ def embeddings_from_collection(collection_name: str, subreddits: [str]):
         include=["embeddings", "metadatas"],
         where={"subreddit": {"$in": subreddits}}
     )
-    embedds = stored["embeddings"]
+
+    M_embedd = np.matrix(stored["embeddings"])
     meta = stored["metadatas"]
 
     print("getting vectors: ", len(meta))
-
-    M_embedd = np.matrix(embedds)  # does this work?
 
     return M_embedd, meta
 
 
 if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
-    input_file = 'C:/Users/victo/PycharmProjects/RedditProject/data/RS_2020-06_filtered.zst'
+    input_file = 'C:/Users/coss/RedditProject/data/RS_2020-06_filtered.zst'
     collection_name = 'Reddit-Comments'
 
-
     # embedds all comments in the file and saves them in a collection
-    example.chroma_client.delete_collection(collection_name)
-    new_load_embeddings_n(source=input_file, collection_name=collection_name)
+    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
-    ref_0 = ['climatechange', 'Feminism']  # left of axis
+    ref_0 = ['progressive']  # left of axis
     ref_1 = ['Republican']  # right end of axis
+    """
     data = ['Republican', 'Democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
             'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
             'backpacking']
+    """
+    data = ['climatechange', 'Feminism', 'backpacking']
     # what we are projecting
 
     # extracts embeddings only for comments in a certain subreddit, and creates axis between ref0 and ref1
@@ -130,13 +128,13 @@ if __name__ == '__main__':
 
     # extract comments from subreddits we want to project and project them
     M_embedd, meta_data = embeddings_from_collection(collection_name=collection_name, subreddits=data)
-    print(M_embedd.shape, axis.shape)
+   
 
     results = np.matmul(M_embedd, axis.transpose())
 
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
 
-    print(results)
+    #print(results)
 
-    projection.show_stacked_hist(results, meta_data, "subreddit")
+    projection.show_stacked_hist(results, meta_data, "subreddit", num_bins = 30)
