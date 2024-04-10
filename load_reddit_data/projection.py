@@ -145,7 +145,7 @@ def split_by_attribute(values, meta, attribute: str):
 
 
 def pairsort(meta, embedds, attribute: str):
-    pairt = [(meta[i][attribute], embedds[i]) for i in range(0, len(embedds))]
+    pairt = [(meta[i][attribute], embedds[i]) for i in range(0, len(meta))]
     pairt.sort()
 
     for i in range(0, len(embedds)):
@@ -205,7 +205,7 @@ def get_average_attribute(num_bins: int, values, meta, attribute: str):
 
 
 def show_stacked_hist(values, meta, attribute, num_bins):
-    avgs = get_average_attribute(num_bins, values, meta.copy(), attribute="wls")
+    #avgs = get_average_attribute(num_bins, values, meta.copy(), attribute="wls")
     print("avgs: ", avgs)
 
     split_data, legend = split_by_attribute(values, meta, attribute)

@@ -6,7 +6,7 @@ import chromadb
 chroma_client = chromadb.HttpClient(host='localhost', port=8000)
 
 
-def get_embedding(sentence: str) -> np.ndarray:
+def get_embedding(sentence: str) -> list[float]:
     url = 'http://localhost:5000/v1/embeddings'
 
     headers = {
@@ -23,7 +23,7 @@ def get_embedding(sentence: str) -> np.ndarray:
         raise ValueError(f'Error: {response.status_code}')
     else:
         embedding_vector = np.array(response.json()['data'][0]['embedding'])
-        return embedding_vector
+        return embedding_vector.tolist()
 
 
 def insert(vid: str, sentence: str, embedding: np.ndarray) -> None:

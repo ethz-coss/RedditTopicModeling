@@ -1,20 +1,19 @@
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.embeddings import Embeddings
-
+import time
 import example
 from langchain_community.document_loaders import (
     DirectoryLoader,
-    TextLoader,
     PyPDFLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import numpy as np
-import chromadb
+import tensorflow as tf
 
-DATA_DIR = "./data"
-
+DATA_DIR = "./data/psych"
+EMBEDDING_DIM = 5120
 hp_collection = example.chroma_client.get_or_create_collection("harry_potter_100")
-chunked_documents = []
+chunked_documents : list[str]
 
 
 # splits documents in DATA_DIR and saves them in chunked_documents:[Documents]
@@ -26,7 +25,8 @@ def split_pdf_document():
 
     # split documents into chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=120, chunk_overlap=0)
-    chunked_documents = text_splitter.split_documents(loaded_documents)
+    chunked_document = text_splitter.split_documents(loaded_documents)
+    chunked_documents = [chunked_document[i].page_content for i in range(len(chunked_document))]
     print("len chuncked docs: ", len(chunked_documents))
 
 
@@ -36,15 +36,41 @@ def run_data_embedd():
 
     for i in range(0, len(chunked_documents)):
         # getting embedding and adding vector to collection
-        embedding = example.get_embedding(chunked_documents[i].page_content)
+        embedding = example.get_embedding(chunked_documents[i])
         hp_collection.add(
             ids=[str(i)],
             embeddings=[embedding.tolist()],
-            documents=[chunked_documents[i].page_content],
+            documents=[chunked_documents[i]],
         )
         print("added", i)
 
     print("collection size: ", hp_collection.count())
+
+
+def run_data_embedd_fast():
+    
+    #convert text dataset into Tensorflow Dataset
+    dataset = tf.data.Dataset.from_tensor_slices(chunked_documents)
+    embeddings_dataset = dataset.map(example.get_embedding)
+    
+    for i in range(0, len(chunked_documents)):
+        # getting embedding and adding vector to collection
+        embedding = next(iter(embeddings_dataset))
+        hp_collection.add(
+            ids=[str(i)],
+            embeddings=[embedding],
+            documents=[chunked_documents[i]],
+        )
+        print("added", i)
+
+    print("collection size: ", hp_collection.count())
+
+def save_to_collection(M_embedd):
+    for i in range(0, len(M_embedd[:, 0])):
+        hp_collection.add(
+            ids=[str(i)],
+            embeddings=[M_embedd[i, :].tolist()],
+        )
 
 
 # queries collection
@@ -90,15 +116,14 @@ def get_distance(text1:str, text2:str):
 if __name__ == '__main__':
     # prepare data
     split_pdf_document()
+
+    start = time.time()
+    M = run_data_embedd_fast()
+    save_to_collection(M)
+    print('time: ', (time.time()-start))
+
+    start = time.time()
     run_data_embedd()
+    print('time: ', (time.time()-start))
     #print(get_distance("The dog is brown", "what does the animal look like?"))
 
-    # now we can set a query
-    query_text = "Hogwarts"
-    # string that you want to appear in the answers
-    contains = "Harry"
-    # amount of answers
-    n = 10
-
-    results = query_hp(query_text=query_text, content=contains, n=n)
-    print_query_results(results=results)  # id, distance, text
