@@ -25,6 +25,8 @@ def get_embedding(sentence: str) -> list[float]:
         embedding_vector = np.array(response.json()['data'][0]['embedding'])
         return embedding_vector.tolist()
 
+def get_embedding2(sentence: str) -> list[float]:
+    return np.arange(50).tolist()
 
 def insert(vid: str, sentence: str, embedding: np.ndarray) -> None:
     collection = chroma_client.get_or_create_collection(name="my_collection")

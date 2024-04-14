@@ -1,25 +1,21 @@
 import pandas as pd
 import example
-from load_reddit_data import reddit_projection
-
+from load_reddit_data import reddit_projection, projection
 import umap
 import plotly.express as px
 
-collection_name = "Reddit-Comments"
-data = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
-        'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
-        'backpacking']
+ref = "./data/old"
+collection_name = "pdfs"
+
+M_embedd, meta = projection.new_load_embeddings_n(source=ref, collection_name=collection_name)
+#M_embedd, meta = projection.embeddings_from_collection(collection_name=collection_name)
 
 collection = example.chroma_client.get_collection(collection_name)
 print(collection.count())
 
-M_embedd, meta = reddit_projection.embeddings_from_collection(collection_name=collection_name, subreddits=data)
-print(len(M_embedd))
-print(len(meta))
-print (meta)
 df = pd.DataFrame(M_embedd)
 print(df)
-df = df.assign(source=[meta[i]['subreddit'] for i in range(len(meta))])
+df = df.assign(source=[meta[i]['source'] for i in range(len(meta))])
 features = df.loc[:, :(reddit_projection.EMBEDDING_DIM-1)]
 
 print(features)
@@ -35,7 +31,7 @@ print('transformed and fit')
 fig_2d = px.scatter(
     proj_2d, x=0, y=1,
     color=df.source, labels={'color': 'source'},
-    hover_name=[meta[i]['score'] for i in range(len(meta))] #change score to title
+    hover_name=[meta[i]['text'] for i in range(len(meta))] #change score to text
 )
 
 #fig_3d = px.scatter_3d(
