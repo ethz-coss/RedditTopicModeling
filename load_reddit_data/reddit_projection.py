@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     # extract comments from subreddits we want to project and project them
     M_embedd1, meta_data1 = embeddings_from_collection(collection_name=collection_name, subreddits=data1)
-    results = np.matmul(M_embedd, axis.transpose())
+    results = np.matmul(M_embedd1, axis.transpose())
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
     #print(results)
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         
     
     M_embedd2, meta_data2 = embeddings_from_collection(collection_name=collection_name, subreddits=data2)
-    results = np.matmul(M_embedd, axis.transpose())
+    results = np.matmul(M_embedd2, axis.transpose())
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
     #print(results)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
 
     M_embedd3, meta_data3 = embeddings_from_collection(collection_name=collection_name, subreddits=data3)
-    results = np.matmul(M_embedd, axis.transpose())
+    results = np.matmul(M_embedd3, axis.transpose())
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
     #print(results)
