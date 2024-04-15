@@ -104,14 +104,14 @@ def save_to_collection(M_embedd, meta, collection_name: str):
 def embeddings_from_collection(collection_name: str):
     # get all vectors from collection and save them in matrix
     collection = example.chroma_client.get_or_create_collection(collection_name)
+    print(collection.count())
     stored = collection.get(
-        ids=[str(i) for i in range(0, collection.count())],
         include=["embeddings", "metadatas"]
     )
     embedds = stored["embeddings"]
     meta = stored["metadatas"]
 
-    print("getting vectors: ", len(meta))
+    print("getting vectors: ", len(embedds))
 
     M_embedd = np.matrix(embedds)
 
@@ -315,4 +315,6 @@ def run_normalized_projection():
 
 
 if __name__ == '__main__':
-    run_normalized_projection()
+    embeddings_from_collection('pdfs')
+    
+    #run_normalized_projection()

@@ -7,14 +7,12 @@ import plotly.express as px
 
 ref = "./data/old"
 collection_name = "pdfs"
+
 collection = example.chroma_client.get_collection(collection_name)
 print("collection count: ", collection.count())
-collection.delete(
-    ids = [str(i) for i in range(collection.count())],
-    where = {"source": "data\old\harry potter 1.1.pdf"}
-)
-print("collection count: ", collection.count())
+
 #M_embedd, meta = projection.new_load_embeddings_n(source=ref, collection_name=collection_name)
+
 M_embedd, meta = projection.embeddings_from_collection(collection_name=collection_name)
 
 

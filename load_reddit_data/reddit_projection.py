@@ -97,6 +97,7 @@ def embeddings_from_collection(collection_name: str, subreddits):
 
 if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
+    
     input_file = 'C:/Users/coss/RedditProject/data/RS_2020-06_filtered.zst'
     collection_name = 'Reddit-Comments-2'
 
