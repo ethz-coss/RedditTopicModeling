@@ -52,10 +52,9 @@ def example_read_data(input_file_name: str) -> list[Any]:
 # this chooses which metadata fields to keep
 def relevant_data(lines):
     # choose metadata values
-    return {key: lines[key] for key in lines.keys()
+    return {key: lines[key] for key in lines.keys() 
             & {'author', 'created_utc', 'id', 'selftext', 'subreddit_subscribers', 'subreddit', 'score', 'num_comments',
-               'wls', 'upvote_ratio', 'is_original_content'}}
-
+               'wls', 'upvote_ratio', 'is_original_content', 'title' }} 
 
 def new_load_embeddings_n(source: str, collection_name: str):
     lines = example_read_data(source)
@@ -63,7 +62,7 @@ def new_load_embeddings_n(source: str, collection_name: str):
     meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
 
     print("lines: ", len(lines))
-    for i in range(collection.count() -1, len(lines)):
+    for i in range(0, len(lines)):
         
         if None in meta[i].values(): continue
         # getting embedding and adding vector to collection
@@ -77,20 +76,6 @@ def new_load_embeddings_n(source: str, collection_name: str):
 
         if i % 1000 == 0:
             print(collection.count())
-
-def fast_add(collection_count:int, lines : list[str], meta: list[Any] ):
-    collection = example.chroma_client.get_or_create_collection(collection_name)
-    for i in range(collection_count() -1, len(lines)):
-        
-        if None in meta[i].values(): continue
-        # getting embedding and adding vector to collection
-        embedding = example.get_embedding(lines[i]['title'])
-        embedding = embedding / np.linalg.norm(embedding)
-        collection.add(
-            ids=[str(i)],
-            embeddings=[embedding.tolist()],
-            metadatas=[meta[i]]
-        )
 
 
 def embeddings_from_collection(collection_name: str, subreddits):
@@ -114,21 +99,19 @@ if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
     input_file = 'C:/Users/coss/RedditProject/data/RS_2020-06_filtered.zst'
     collection_name = 'Reddit-Comments-2'
-    print('collection size: ', example.chroma_client.get_collection(collection_name).count())
-    # embedds all comments in the file and saves them in a collection
-    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
-    
 
-    ref_0 = ['democrats']  # left of axis
+    # embedds all comments in the file and saves them in a collection
+    new_load_embeddings_n(source=input_file, collection_name=collection_name)
+    print('Done embedding')
+
+    ref_0 = ['progressive']  # left of axis
     ref_1 = ['Republican']  # right end of axis
-    ''' 
-    data = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
-            'random', 'progressive', 'TrueChristian', 'Trucks', 'AskMenOver30',
+    """
+    data = ['Republican', 'Democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
+            'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
             'backpacking']
-    '''
-    data1 = ['climatechange', 'Feminism', 'backpacking']
-    data2 = ['nra', 'Trucks', 'TrueChristian']
-    data3 = ['healthcare', 'politics', 'AskMenOver30']
+    """
+    data = ['climatechange', 'Feminism', 'backpacking']
     # what we are projecting
 
     # extracts embeddings only for comments in a certain subreddit, and creates axis between ref0 and ref1
@@ -139,7 +122,7 @@ if __name__ == '__main__':
     avg_1 = projection.average_embedding_n(M_embedd)
 
     axis = projection.create_axis_n(avg_0, avg_1)  # goes from 0 to 1
-    print("axis: ", str(axis))
+    print("axis: ", axis)
     print("avg_0: ", projection.project_embedding(axis, avg_0.transpose()))
     print("avg_1: ", projection.project_embedding(axis, avg_1.transpose()))
 
@@ -159,6 +142,7 @@ if __name__ == '__main__':
     results = np.matmul(M_embedd2, axis.transpose())
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
+
     #print(results)
     try:
         projection.show_stacked_hist(results, meta_data1, "subreddit", num_bins = 30)

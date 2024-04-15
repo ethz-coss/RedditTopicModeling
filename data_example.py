@@ -51,7 +51,7 @@ def run_data_embedd_fast():
     
     #convert text dataset into Tensorflow Dataset
     dataset = tf.data.Dataset.from_tensor_slices(chunked_documents)
-    embeddings_dataset = dataset.map(example.get_embedding)
+    embeddings_dataset = dataset.map(example.get_embedding2)
     
     for i in range(0, len(chunked_documents)):
         # getting embedding and adding vector to collection

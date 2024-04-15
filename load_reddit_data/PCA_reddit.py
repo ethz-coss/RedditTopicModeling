@@ -6,7 +6,7 @@ import plotly.express as px
 
 collection_name = "Reddit-Comments"
 data = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
-        'random', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
+        'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
         'backpacking']
 
 collection = example.chroma_client.get_collection(collection_name)
@@ -27,6 +27,5 @@ PrincipalComponents = pca.fit_transform(features)
 fig_2d = px.scatter(
     PrincipalComponents, x=0, y=1,
     color=df.source, labels={'color': 'source'}
-    
 )
 fig_2d.show()

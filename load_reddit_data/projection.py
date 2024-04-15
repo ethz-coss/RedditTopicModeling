@@ -84,6 +84,8 @@ def new_load_embeddings_n(source: str, collection_name: str):
     M_embedd = data_embedd_n(chunked_documents)
 
     meta = [chunked_documents[i].metadata for i in range(0, len(chunked_documents))]
+    for i in range(0, len(meta)):
+        chunked_documents[i].metadata.update({'text': chunked_documents[i].page_content})
 
     save_to_collection(M_embedd, meta, collection_name)
     return M_embedd, meta
@@ -206,7 +208,7 @@ def get_average_attribute(num_bins: int, values, meta, attribute: str):
 
 def show_stacked_hist(values, meta, attribute, num_bins):
     #avgs = get_average_attribute(num_bins, values, meta.copy(), attribute="wls")
-    print("avgs: ", avgs)
+    #print("avgs: ", avgs)
 
     split_data, legend = split_by_attribute(values, meta, attribute)
     #print(legend)

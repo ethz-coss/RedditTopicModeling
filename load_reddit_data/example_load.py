@@ -29,7 +29,7 @@ def example_read_data(input_file_name: str) -> pd.DataFrame:
 
             # Do whatever you want with the line (here I print the title of the submission with some other metadata if it in the nra subreddit and then add it to the interesting_lines list)
             if line_json['subreddit'] == 'nra':
-                print(line_json['selftext'])
+                print(line_json)
                 #print('Title:', line_json['title'], 'Author:', line_json['author'], 'Subreddit:',
                       #line_json['subreddit'], 'Upvotes:', line_json['score'])
 
@@ -52,5 +52,5 @@ def example_read_data(input_file_name: str) -> pd.DataFrame:
 
 if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
-    input_file = 'C:/Users/coss/RedditProject/data/RS_2020-06_filtered.zst'
+    input_file = 'C:/Users/victo/PycharmProjects/RedditProject/data/RS_2020-06_filtered.zst'
     example_read_data(input_file_name=input_file)
