@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from langchain_community.document_loaders import (
     DirectoryLoader,
-    TextLoader,
     PyPDFLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter

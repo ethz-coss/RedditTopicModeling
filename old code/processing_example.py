@@ -1,5 +1,4 @@
 import data_example as de
-import example
 
 
 def horrible_threshhold_query(query_text: str, content: str, threshold: float):

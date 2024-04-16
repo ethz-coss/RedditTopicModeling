@@ -6,7 +6,7 @@ import chromadb
 chroma_client = chromadb.HttpClient(host='localhost', port=8000)
 
 
-def get_embedding(sentence: str) -> list[float]:
+def get_embedding(sentence: str) -> np.ndarray:
     url = 'http://localhost:5000/v1/embeddings'
 
     headers = {
@@ -23,10 +23,8 @@ def get_embedding(sentence: str) -> list[float]:
         raise ValueError(f'Error: {response.status_code}')
     else:
         embedding_vector = np.array(response.json()['data'][0]['embedding'])
-        return embedding_vector.tolist()
+        return embedding_vector
 
-def get_embedding2(sentence: str) -> list[float]:
-    return np.arange(50).tolist()
 
 def insert(vid: str, sentence: str, embedding: np.ndarray) -> None:
     collection = chroma_client.get_or_create_collection(name="my_collection")
@@ -52,6 +50,5 @@ def run_example():
 if __name__ == '__main__':
     #run_example()
     print(chroma_client.list_collections())
-    print(chroma_client.get_collection(name="Reddit-Comments").count())
     
      

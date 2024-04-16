@@ -5,12 +5,12 @@ from typing import Any
 import numpy as np
 import example
 import projection
-from zst_io import read_lines_zst
+from load_reddit_data.zst_io import read_lines_zst
 
 
 
-EMBEDDING_DIM = 5120 # for 13 B model
-#EMBEDDING_DIM = 4096  # for 7B model
+#EMBEDDING_DIM = 5120 # for 13 B model
+EMBEDDING_DIM = 4096  # for 7B model
 
 # Create a logger to output progress in a pretty way
 logger = logging.getLogger('example_logger')
@@ -98,7 +98,7 @@ def embeddings_from_collection(collection_name: str, subreddits):
 if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
     
-    input_file = 'C:/Users/coss/RedditProject/data/RS_2020-06_filtered.zst'
+    input_file = '/data/RS_2020-06_filtered.zst'
     collection_name = 'Reddit-Comments-2'
 
     # embedds all comments in the file and saves them in a collection
