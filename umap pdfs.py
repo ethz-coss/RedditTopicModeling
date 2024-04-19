@@ -1,17 +1,17 @@
 import pandas as pd
 import example
 import reddit_projection
-import projection
+import pdf_projection
 import umap
 import plotly.express as px
 
 ref = "./data/old"
 collection_name = "pdfs"
-M_embedd, meta = projection.new_load_embeddings_n(source=ref, collection_name=collection_name)
+M_embedd, meta = pdf_projection.new_load_embeddings_n(source=ref, collection_name=collection_name)
 collection = example.chroma_client.get_collection(collection_name)
 print("collection count: ", collection.count())
 
-# M_embedd, meta = projection.embeddings_from_collection(collection_name=collection_name)
+# M_embedd, meta = pdf_projection.embeddings_from_collection(collection_name=collection_name)
 
 
 df = pd.DataFrame(M_embedd)
