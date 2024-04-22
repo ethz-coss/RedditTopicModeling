@@ -12,6 +12,8 @@ import duck_try
 
 #EMBEDDING_DIM = 5120 # for 13 B model
 EMBEDDING_DIM = 4096  # for 7B model
+#EMBEDDING_DIM = 5120 # for 13 B model
+EMBEDDING_DIM = 4096  # for 7B model
 
 # Create a logger to output progress in a pretty way
 logger = logging.getLogger('example_logger')
@@ -140,11 +142,14 @@ if __name__ == '__main__':
     #M_embedd, meta0 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_0, ids=ids)
     M_embedd, meta0 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_0)
     avg_0 = pdf_projection.average_embedding_n(M_embedd)
+    avg_0 = pdf_projection.average_embedding_n(M_embedd)
 
     #M_embedd, meta1 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_1, ids = ids)
     M_embedd, meta1 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_1)
     avg_1 = pdf_projection.average_embedding_n(M_embedd)
+    avg_1 = pdf_projection.average_embedding_n(M_embedd)
 
+    axis = pdf_projection.create_axis_n(avg_0, avg_1)  # goes from 0 to 1
     axis = pdf_projection.create_axis_n(avg_0, avg_1)  # goes from 0 to 1
     print("axis: ", axis)
     print("avg_0: ", pdf_projection.project_embedding(axis, avg_0.transpose()))
