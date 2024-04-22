@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from langchain_community.document_loaders import (
     DirectoryLoader,
-    TextLoader,
     PyPDFLoader,
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -155,7 +154,7 @@ def pairsort(meta, embedds, attribute: str):
         embedds[i] = pairt[i][1]
 
 
-def show_hist(values):
+def show_hist(values, title):
     print("starting histogramm")
     # Plotting a basic histogram
     plt.hist(values, bins=30, color='skyblue', edgecolor='black')
@@ -163,7 +162,11 @@ def show_hist(values):
     # Adding labels and title
     plt.xlabel('Values')
     plt.ylabel('Frequency')
-    plt.title('Basic Histogram')
+    plt.title(title)
+
+    x_min, x_max = plt.xlim()
+    max_abs = max(abs(x_max), abs(x_min))
+    plt.xlim(-max_abs, max_abs)
 
     # Display the plot
     plt.show()
@@ -206,11 +209,11 @@ def get_average_attribute(num_bins: int, values, meta, attribute: str):
     # adjust last sum
 
 
-def show_stacked_hist(values, meta, attribute, num_bins):
+def show_stacked_hist(values, meta, attribute, num_bins, title):
     #avgs = get_average_attribute(num_bins, values, meta.copy(), attribute="wls")
     #print("avgs: ", avgs)
 
-    split_data, legend = split_by_attribute(values, meta, attribute)
+    split_data, legend = split_by_attribute(values, meta.copy(), attribute)
     #print(legend)
     #print(split_data)
     plt.hist(split_data, bins=num_bins, stacked=True, edgecolor='black')
@@ -218,7 +221,12 @@ def show_stacked_hist(values, meta, attribute, num_bins):
     # Adding labels and title
     plt.xlabel('Values')
     plt.ylabel('Frequency')
-    plt.title('Stacked Histogram')
+    plt.title(title)
+    
+    #center axis without messing up scale
+    x_min, x_max = plt.xlim()
+    max_abs = max(abs(x_max), abs(x_min))
+    plt.xlim(-max_abs, max_abs)
 
     # Adding legend
     plt.legend(legend)
