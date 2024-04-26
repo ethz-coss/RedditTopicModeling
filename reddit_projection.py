@@ -7,13 +7,11 @@ import example
 import pdf_projection
 from load_reddit_data.zst_io import read_lines_zst
 import duck_try
-
-
+from sentence_transformers import SentenceTransformer
 
 #EMBEDDING_DIM = 5120 # for 13 B model
-EMBEDDING_DIM = 4096  # for 7B model
-#EMBEDDING_DIM = 5120 # for 13 B model
-EMBEDDING_DIM = 4096  # for 7B model
+#EMBEDDING_DIM = 4096  # for 7B model
+EMBEDDING_DIM = 384  # for transformers Model
 
 # Create a logger to output progress in a pretty way
 logger = logging.getLogger('example_logger')
@@ -55,9 +53,10 @@ def example_read_data(input_file_name: str) -> list[Any]:
 # this chooses which metadata fields to keep
 def relevant_data(lines):
     # choose metadata values
-    return {key: lines[key] for key in lines.keys() 
+    return {key: lines[key] for key in lines.keys()
             & {'author', 'created_utc', 'id', 'selftext', 'subreddit_subscribers', 'subreddit', 'score', 'num_comments',
-               'wls', 'upvote_ratio', 'is_original_content', 'title' }} 
+               'wls', 'upvote_ratio', 'is_original_content', 'title'}}
+
 
 def new_load_embeddings_n(source: str, collection_name: str):
     lines = example_read_data(source)
@@ -65,8 +64,8 @@ def new_load_embeddings_n(source: str, collection_name: str):
     meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
 
     print("lines: ", len(lines))
-    for i in range(0, len(lines)):
-        
+    for i in range(collection.count(), len(lines)):
+
         if None in meta[i].values(): continue
         # getting embedding and adding vector to collection
         embedding = example.get_embedding(lines[i]['title'])
@@ -81,12 +80,36 @@ def new_load_embeddings_n(source: str, collection_name: str):
             print(collection.count())
 
 
+def new_load_embeddings_t(source: str, collection_name: str):
+    lines = example_read_data(source)
+    meta = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
+    lines = [lines[i]['title'] for i in range(0, len(lines))]
+    print("lines: ", len(lines))
+
+    model = SentenceTransformer("./model/all-MiniLM-L6-v2")
+    embeddings = model.encode(lines)
+
+    print("adding to collection")
+    collection = example.chroma_client.get_or_create_collection(collection_name)
+    for i in range(0, len(lines)):
+        if None in meta[i].values(): continue
+        # getting embedding and adding vector to collection
+        embedding = embeddings[i] / np.linalg.norm(embeddings[i])
+        collection.add(
+            ids=[str(i)],
+            embeddings=[embedding],
+            metadatas=[meta[i]]
+        )
+
+    print(collection.count())
+
+
 def embeddings_from_collection_id(collection_name: str, ids, subreddits):
     # get all vectors from collection and save them in matrix
     collection = example.chroma_client.get_or_create_collection(collection_name)
     stored = collection.get(
         include=["embeddings", "metadatas"],
-        where={"$and": [{"subreddit": {"$in": subreddits}},{"id": {"$in": ids}}]}
+        where={"$and": [{"subreddit": {"$in": subreddits}}, {"id": {"$in": ids}}]}
     )
 
     M_embedd = np.matrix(stored["embeddings"])
@@ -115,12 +138,12 @@ def embeddings_from_collection(collection_name: str, subreddits):
 
 if __name__ == '__main__':
     # Change this to the path of the file you want to read on your computer
-    
-    input_file = '/data/RS_2020-06_filtered.zst'
-    collection_name = 'Reddit-Comments-nn'
 
+    input_file = './data/RS_2020-06_filtered.zst'
+    collection_name = 'Reddit-Comments-t'
+    print(example.chroma_client.get_or_create_collection(collection_name).count())
     # embedds all comments in the file and saves them in a collection
-    #new_load_embeddings_n(source=input_file, collection_name=collection_name)
+    new_load_embeddings_t(source=input_file, collection_name=collection_name)
     print('Done embedding')
 
     ref_0 = ['progressive']  # left of axis
@@ -135,17 +158,17 @@ if __name__ == '__main__':
     data2 = ['Trucks', 'nra', 'AskMenOver30', 'TrueChristian']
     data3 = ['healthcare', 'education']
 
-    df = duck_try.get_good_ids()    
+    df = duck_try.get_good_ids()
     ids = list(df['id'])
 
     # extracts embeddings only for comments in a certain subreddit, and creates axis between ref0 and ref1
-    #M_embedd, meta0 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_0, ids=ids)
-    M_embedd, meta0 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_0)
+    M_embedd, meta0 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_0, ids=ids)
+    #M_embedd, meta0 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_0)
     avg_0 = pdf_projection.average_embedding_n(M_embedd)
     avg_0 = pdf_projection.average_embedding_n(M_embedd)
 
-    #M_embedd, meta1 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_1, ids = ids)
-    M_embedd, meta1 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_1)
+    M_embedd, meta1 = embeddings_from_collection_id(collection_name=collection_name, subreddits=ref_1, ids = ids)
+    #M_embedd, meta1 = embeddings_from_collection(collection_name=collection_name, subreddits=ref_1)
     avg_1 = pdf_projection.average_embedding_n(M_embedd)
     avg_1 = pdf_projection.average_embedding_n(M_embedd)
 
@@ -155,7 +178,6 @@ if __name__ == '__main__':
     print("avg_0: ", pdf_projection.project_embedding(axis, avg_0.transpose()))
     print("avg_1: ", pdf_projection.project_embedding(axis, avg_1.transpose()))
 
-   
     # extract comments from subreddits we want to project and project them
     #M_embedd1, meta_data1 = embeddings_from_collection_id(collection_name=collection_name, subreddits=data1, ids = ids)
     M_embedd1, meta_data1 = embeddings_from_collection(collection_name=collection_name, subreddits=data1)
@@ -164,24 +186,21 @@ if __name__ == '__main__':
     results = [float(x[0]) for x in results]
     #print(results)
     try:
-        pdf_projection.show_stacked_hist(results, meta_data1, "subreddit", num_bins = 30, title = 'left')
+        pdf_projection.show_stacked_hist(results, meta_data1, "subreddit", num_bins=30, title='left')
     except:
-        pdf_projection.show_hist(results, title = 'left')
-        
-    
+        pdf_projection.show_hist(results, title='left')
+
     #M_embedd2, meta_data2 = embeddings_from_collection_id(collection_name=collection_name, subreddits=data2, ids=ids)
     M_embedd2, meta_data2 = embeddings_from_collection(collection_name=collection_name, subreddits=data2)
     results = np.matmul(M_embedd2, axis.transpose())
     # I should find a smarter way to do this
     results = [float(x[0]) for x in results]
-   
+
     #print(results)
     try:
-        pdf_projection.show_stacked_hist(results, meta_data2, "subreddit", num_bins = 30, title='right')
+        pdf_projection.show_stacked_hist(results, meta_data2, "subreddit", num_bins=30, title='right')
     except:
         pdf_projection.show_hist(results, title='right')
-        
-
 
     M_embedd3, meta_data3 = embeddings_from_collection_id(collection_name=collection_name, subreddits=data3, ids=ids)
     M_embedd3, meta_data3 = embeddings_from_collection(collection_name=collection_name, subreddits=data3)
@@ -190,7 +209,6 @@ if __name__ == '__main__':
     results = [float(x[0]) for x in results]
     #print(results)
     try:
-        pdf_projection.show_stacked_hist(results, meta_data3, "subreddit", num_bins = 30, title='neutral')
+        pdf_projection.show_stacked_hist(results, meta_data3, "subreddit", num_bins=30, title='neutral')
     except:
         pdf_projection.show_hist(results, title='neutral')
-        
