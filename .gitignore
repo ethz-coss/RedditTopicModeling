@@ -177,3 +177,8 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm+all
+
+transformer_hdf5\model
+transformer_hdf5\data
+LlamaChroma\model
+LlamaChroma\data
