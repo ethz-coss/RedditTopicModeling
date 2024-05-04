@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import projection
 import h5py
-from load_reddit_data.zst_io import read_lines_zst
+from transformer_hdf5.zst_io import read_lines_zst
 import duck_try
 from sentence_transformers import SentenceTransformer
 
@@ -57,17 +57,20 @@ def relevant_data(lines):
 
 
 def new_load_embeddings_t(source: str):
-    lines = example_read_data(source)
+    #get lines from zst file
+    #lines = example_read_data(source)
     #metadata = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
     #lines = [lines[i]['title'] for i in range(0, len(lines))]
 
-    metadata = [relevant_data(lines[i]) for i in range(0, len(lines))]  # get data we want
-    lines = [lines[i]['title'] for i in range(0, len(lines))]
-
-    print("lines: ", len(lines))
+    #get lines from duck db
+    data = duck_try.get_comments(source)
+    lines = data['title'].tolist()
+    subreddits = data['subreddit'].tolist()
+    ids = data['id'].tolist()
 
     #model = SentenceTransformer("./model/all-MiniLM-L6-v2")
     model = SentenceTransformer("./model/all-mpnet-base-v2")
+    print(lines[0:10])
     embeddings = model.encode(lines)
     embeddings_t = np.array(embeddings, dtype=np.float64)
 
@@ -76,16 +79,17 @@ def new_load_embeddings_t(source: str):
 
     hf = h5py.File('vectors_small.h5', 'w')
 
-    for i, (vector, meta) in enumerate(zip(embeddings_t, metadata)):
+    for i, (vector, line, sub, id) in enumerate(zip(embeddings_t, lines, subreddits, ids)):
         # Create dataset for vector
         hf.create_dataset(f'vector_{i}', data=vector)
         # Attach metadata as attribute to the dataset
-        hf[f'vector_{i}'].attrs['title'] = meta['title']
-        hf[f'vector_{i}'].attrs['subreddit'] = meta['subreddit']
-        hf[f'vector_{i}'].attrs['id'] = meta['id']
+        hf[f'vector_{i}'].attrs['title'] = line
+        hf[f'vector_{i}'].attrs['subreddit'] = sub
+        hf[f'vector_{i}'].attrs['id'] = id
 
     print('done saving embeddings')
     hf.close()
+
 
 def embeddings_from_file_id(good_ids):
     vectors = []
@@ -96,7 +100,7 @@ def embeddings_from_file_id(good_ids):
     with h5py.File('vectors_all.h5', 'r') as hf:
         # Read vectors and metadata from the file
         for key in hf.keys():
-            if(hf[key].attrs['id'] in good_ids):
+            if (hf[key].attrs['id'] in good_ids):
                 vectors.append(hf[key][:])
                 titles.append(hf[key].attrs['title'])
                 subreddits.append(hf[key].attrs['subreddit'])
@@ -111,6 +115,8 @@ def embeddings_from_file_id(good_ids):
     print("getting vectors: ", len(meta[0]))
 
     return M_embedd, meta
+
+
 def embeddings_from_file():
     vectors = []
     titles = []

@@ -46,3 +46,6 @@ def write_lines_zst(writer: zstandard.ZstdCompressionWriter, lines: List[str]):
     for line in lines:
         writer.write(line.encode('utf-8'))
         writer.write("\n".encode('utf-8'))
+
+
+read_lines_zst(file_name='./data/RC_2007-03.zst')

@@ -12,16 +12,11 @@ import duck_try
 # print (id_dict)
 #titles = [id_dict[meta[i]['id']]['title'] for i in range(len(meta))]
 
-source = 'C:/Users/victo/PycharmProjects/RedditProject/transformer_hdf5/data/RS_2020-06_filtered.zst'
-reddit_projection.new_load_embeddings_t(source=source)
+source = 'comments_10_12'
+reddit_projection.new_load_embeddings_t(source)
 
-df = duck_try.get_good_ids()
-titles1 = list(df['title'])
-ids = list(df['id'])
-
-data1 = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'progressive', 'The_Donald']
 #data1 = ["democrats", "Feminism"]
-M_embedd, meta = reddit_projection.embeddings_from_file_id(ids)
+M_embedd, meta = reddit_projection.embeddings_from_file()
 titles = [meta[0][i] for i in range(len(meta[0]))]
 
 # create dataframe
