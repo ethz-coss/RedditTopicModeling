@@ -1,15 +1,38 @@
+import time
 import duckdb
-import json
-import os
-from load_reddit_data.zst_io import read_lines_zst
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import zstandard
+from typing import List
+import os
+import json
+import logging
+from zst_io import read_lines_zst, write_lines_zst
 
-con = duckdb.connect("file.db")
+logger = logging.getLogger('subreddit_extraction')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+con = duckdb.connect("/cluster/work/coss/anmusso/victoria/loaded_data/loaded_comments.db")
 
 
-def read_data_file(input_file_name: str) -> pd.DataFrame:
+def get_comments(collection_name: str):
+    df = con.sql("{}{}".format("SELECT id, body AS title, subreddit FROM ", collection_name)).fetchdf()
+    print(df)
+    return df
+
+
+def get_submissions(collection_name: str):
+    df = con.sql("{}{}".format("SELECT id, title, subreddit FROM ", collection_name)).fetchdf()
+    print(df)
+    return df
+
+
+def file_to_pd(input_file_name: str) -> pd.DataFrame:
     # Create a list to store the interesting lines
     interesting_lines = []
 
@@ -18,11 +41,11 @@ def read_data_file(input_file_name: str) -> pd.DataFrame:
     file_size = os.stat(input_file_name).st_size
 
     # Loop through every line in the file
-    for line, file_bytes_processed in read_lines_zst(file_name=input_file_name):
+    for line, file_bytes_processed in read_lines_zst(file_name=input_file_name, reader_window_size=reader_window_size,
+                                                     reader_chunk_size=reader_chunk_size):
         try:
             # Load the line as JSON and check if the subreddit is in the list
             line_json = json.loads(line)
-            # print(line_json, len(line_json))
             # Do whatever you want with the line (here I print the title of the submission with some other metadata if it in the nra subreddit and then add it to the interesting_lines list)
             interesting_lines.append(line_json)
 
@@ -34,12 +57,14 @@ def read_data_file(input_file_name: str) -> pd.DataFrame:
 
         # I create a pandas dataframe from the interesting lines list
     df_lines = pd.DataFrame(interesting_lines)
+    print(df_lines.columns)
     return df_lines
 
 
-def load_into_duck():
-    input_file = './data/RS_2020-06_filtered.zst'
-    lines = read_data_file(input_file)
+def load_submissions_old():
+    #input_file = './data/RS_2020-06_filtered.zst'
+    input_file = './data/RC_2007-03.zst'
+    lines = file_to_pd(input_file)
     # we have to drop a few attributes for which sql is not able to determine a Type
     clean = lines.drop(['author_flair_background_color', 'link_flair_background_color', 'author_flair_css_class',
                         'author_flair_template_id', 'author_flair_text', 'gildings', 'all_awardings', 'category',
@@ -137,7 +162,40 @@ def subreddit_scores():
 
 
 if __name__ == '__main__':
-    load_into_duck()
-    get_good_ids()
+
+    #con.sql("DROP TABLE IF EXISTS comments_20_05")
+    base_path = '/cluster/work/coss/anmusso/reddit'
+    input_file_path = f'{base_path}/comments/RC_2020-04.zst'
+    subr = ['Republican',
+            'democrats',
+            'healthcare',
+            'Feminism',
+            'nra',
+            'education',
+            'climatechange',
+            'politics',
+            'progressive',
+            'The_Donald',
+            'TrueChristian',
+            'Trucks',
+            'teenagers',
+            'AskMenOver30',
+            'backpacking',
+            'news',
+            'BlackLivesMatter',
+            'racism',
+            'news',
+            'usa',
+            'DefundPoliceNYC']
+    start = time.time()
+    extract_comments(subreddits=subr, input_file_name=input_file_path)
+    #extract_submissions(subreddits=subr, input_file_name=input_file_path)
+    print(f'Time: {time.time() - start}')
+
+    #read_data_file(input_file_path)
+    #get_comments('comments_10_12')
+    #read_data_file(input_file)
+    #load_submissions_old()
+    #get_good_ids()
     #user_subreddit_relation()
     #subreddit_scores()
