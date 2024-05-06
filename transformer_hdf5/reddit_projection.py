@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import projection
 import h5py
-from transformer_hdf5.zst_io import read_lines_zst
+from zst_io import read_lines_zst
 import duck_try
 from sentence_transformers import SentenceTransformer
 
@@ -69,15 +69,15 @@ def new_load_embeddings_t(source: str):
     ids = data['id'].tolist()
 
     #model = SentenceTransformer("./model/all-MiniLM-L6-v2")
-    model = SentenceTransformer("./model/all-mpnet-base-v2")
-    print(lines[0:10])
+    model = SentenceTransformer("/cluster/work/coss/anmusso/victoria/model/all-MiniLM-L6-v2")
+    #print(lines[0:10])
     embeddings = model.encode(lines)
     embeddings_t = np.array(embeddings, dtype=np.float64)
 
     #print("embeddings: ", type(embeddings), embeddings[0])
     print("done getting embeddings ")
 
-    hf = h5py.File('vectors_small.h5', 'w')
+    hf = h5py.File('/cluster/work/coss/anmusso/victoria/embeddings/vectors_C_20_05.h5', 'w')
 
     for i, (vector, line, sub, id) in enumerate(zip(embeddings_t, lines, subreddits, ids)):
         # Create dataset for vector
@@ -122,7 +122,7 @@ def embeddings_from_file():
     titles = []
     subreddits = []
 
-    with h5py.File('vectors.h5', 'r') as hf:
+    with h5py.File('/cluster/work/coss/anmusso/victoria/embeddings/vectors_C_20_05.h5', 'r') as hf:
         # Read vectors and metadata from the file
         for key in hf.keys():
             vectors.append(hf[key][:])

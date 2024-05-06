@@ -10,11 +10,6 @@ import os
 import json
 import logging
 from zst_io import read_lines_zst, write_lines_zst
-import h5py
-import numpy as np
-import duck_try
-from sentence_transformers import SentenceTransformer
-
 
 logger = logging.getLogger('subreddit_extraction')
 logger.setLevel(logging.DEBUG)
@@ -23,7 +18,7 @@ ch = logging.StreamHandler()
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-#con = duckdb.connect("/cluster/work/coss/anmusso/victoria/loaded_data/loaded_comments.db")
+con = duckdb.connect("/cluster/work/coss/anmusso/victoria/loaded_data/loaded_comments.db")
 
 
 def extract_comments(subreddits: List[str], input_file_name: str, reader_window_size: int = 2 ** 31,
@@ -127,40 +122,9 @@ def extract_submissions(subreddits: List[str], input_file_name: str, reader_wind
     logger.info(f"Complete : {file_lines:,} : {bad_lines:,} : {subreddits_lines:,}")
 
 
+
+
 def new_load_embeddings_t(source: str, out_file:str):
-
-    #get lines from duck db
-    data = duck_try.get_comments(source)
-    lines = data['title'].tolist()
-    subreddits = data['subreddit'].tolist()
-    ids = data['id'].tolist()
-
-    #model = SentenceTransformer("./model/all-MiniLM-L6-v2")
-    model = SentenceTransformer("/cluster/work/coss/anmusso/victoria/model/all-MiniLM-L6-v2")
-    #print(lines[0:10])
-    chunck_size = 10000
-
-    hf = h5py.File('{}{}'.format('/cluster/work/coss/anmusso/victoria/embeddings/',out_file), 'w')
-    
-    for j in range(0,len(lines),chunck_size):
-        embeddings = model.encode(lines[j:min(len(lines),j+chunck_size)])
-        embeddings_t = np.array(embeddings, dtype=np.float64)
-        for i in range (j,min(len(lines),j+chunck_size)):
-            # Create dataset for vector
-            hf.create_dataset(f'vector_{i}', data=embeddings_t[i-j])
-            # Attach metadata as attribute to the dataset
-            hf[f'vector_{i}'].attrs['title'] = lines[i]
-            hf[f'vector_{i}'].attrs['subreddit'] = subreddits[i]
-            hf[f'vector_{i}'].attrs['id'] = ids[i]
-        print("added: ", min(len(lines),j+chunck_size))
-
-
-    print('done saving embeddings')
-    hf.close()
-
-
-
-def new_load_embeddings_t2(source: str, out_file:str):
 
     #get lines from duck db
     data = duck_try.get_comments(source) # change to duck_try.get_submissions() for submissions
@@ -170,8 +134,6 @@ def new_load_embeddings_t2(source: str, out_file:str):
 
     #model = SentenceTransformer("./model/all-MiniLM-L6-v2")
     model = SentenceTransformer("/cluster/work/coss/anmusso/victoria/model/all-MiniLM-L6-v2")
-
-    
     embeddings = model.encode(lines)
     embeddings_t = np.array(embeddings, dtype=np.float64)
 
@@ -248,18 +210,18 @@ if __name__ == '__main__':
     #con.sql("DROP TABLE IF EXISTS comments_20_05")
     base_path = '/cluster/work/coss/anmusso/reddit'
     input_file_path = f'{base_path}/comments/RC_2020-04.zst'
-
+    
     subr = ['Republican', 'democrats','healthcare', 'Feminism', 'nra', 'education', 'climatechange',
             'politics','progressive', 'The_Donald','TrueChristian','Trucks','teenagers','AskMenOver30',
             'backpacking','news','BlackLivesMatter','racism','news','usa','DefundPoliceNYC']
     
     
     start = time.time()
-    #extract_comments(subreddits=subr, input_file_name=input_file_path)
+    extract_comments(subreddits=subr, input_file_name=input_file_path)
     #extract_submissions(subreddits=subr, input_file_name=input_file_path)
+    print(f'Time: {time.time() - start}')
 
     source = 'comments_20_05'
     output = 'vectors_C_20_05.h5'
-    new_load_embeddings_t(source, output)
+    reddit_projection.new_load_embeddings_t(source, output)
     print("done embedding comments_20_05 to file vectors_C_20_05.h5")
-    print(f'Time: {time.time() - start}')

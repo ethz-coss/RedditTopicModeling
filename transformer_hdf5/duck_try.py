@@ -8,7 +8,7 @@ from typing import List
 import os
 import json
 import logging
-from transformer_hdf5.zst_io import read_lines_zst, write_lines_zst
+from zst_io import read_lines_zst, write_lines_zst
 
 logger = logging.getLogger('subreddit_extraction')
 logger.setLevel(logging.DEBUG)
@@ -17,106 +17,7 @@ ch = logging.StreamHandler()
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-con = duckdb.connect("./data/comments2.db")
-
-
-def extract_comments(subreddits: List[str], input_file_name: str, reader_window_size: int = 2 ** 31,
-                     reader_chunk_size: int = 2 ** 27):
-    lines_in_subreddits = []
-    subreddits_ = set(subreddits)
-
-    con.sql(
-        "CREATE TABLE comments_10_12 (score INT, subreddit VARCHAR, author VARCHAR, created_utc INTEGER, body VARCHAR "
-        ", id VARCHAR, parent_id VARCHAR )")
-
-    bad_lines, file_lines, file_bytes_processed, subreddits_lines = 0, 0, 0, 0
-    file_size = os.stat(input_file_name).st_size
-
-    # Loop through every line in the file
-    for line, file_bytes_processed in read_lines_zst(file_name=input_file_name, reader_window_size=reader_window_size,
-                                                     reader_chunk_size=reader_chunk_size):
-        try:
-            line_json = json.loads(line)
-            #do basic preselection of lines
-            if (line_json['subreddit'] in subreddits_) and (len(line_json['body']) > 50) and (line_json['score'] > 2):
-                desired_attributes = {'score', 'subreddit', 'author', 'created_utc', 'body', 'id',
-                                      'parent_id'}  # Specify the attributes you want to keep
-                filtered_line = {key: value for key, value in line_json.items() if key in desired_attributes}
-                lines_in_subreddits.append(filtered_line)
-                subreddits_lines += 1
-        except (KeyError, json.JSONDecodeError) as err:
-            bad_lines += 1
-        file_lines += 1
-
-        # Log progress
-        if file_lines % 200_000 == 0:
-            logger.info(
-                f": {subreddits_lines:,} {file_lines:,} : {bad_lines:,} : {file_bytes_processed:,}:{(file_bytes_processed / file_size) * 100:.0f}%")
-
-        # Write the lines to the db file
-        if len(lines_in_subreddits) > 200_000:  #for now only opening json file once is fastest..
-            with open('./data/temp_10_12.json', 'w') as f:
-                json.dump(lines_in_subreddits, f)
-            con.execute("COPY comments_10_12 FROM  './data/temp_10_12.json' (FORMAT JSON, AUTO_DETECT true) ;")
-            lines_in_subreddits = []
-
-    #last bit of lines
-    with open('./data/temp_10_12.json', 'w') as f:
-        json.dump(lines_in_subreddits, f)
-    con.execute("COPY comments_10_12 FROM  './data/temp_10_12.json' (FORMAT JSON, AUTO_DETECT true) ;")
-    print('added lines', con.sql("SELECT COUNT(*) FROM comments_10_12"))
-
-    logger.info(f"Complete : {file_lines:,} : {bad_lines:,} : {subreddits_lines:,}")
-
-
-def extract_submissions(subreddits: List[str], input_file_name: str, reader_window_size: int = 2 ** 31,
-                        reader_chunk_size: int = 2 ** 27):
-    lines_in_subreddits = []
-    subreddits_ = set(subreddits)
-
-    bad_lines, file_lines, file_bytes_processed, subreddits_lines = 0, 0, 0, 0
-    file_size = os.stat(input_file_name).st_size
-
-    con.sql(
-        "CREATE TABLE submission_13_05 (subreddit VARCHAR, score INT, author VARCHAR, "
-        "created_utc INTEGER, title VARCHAR, id VARCHAR, num_comments INTEGER, downs INTEGER )")
-
-    # Loop through every line in the file
-    for line, file_bytes_processed in read_lines_zst(file_name=input_file_name, reader_window_size=reader_window_size,
-                                                     reader_chunk_size=reader_chunk_size):
-        try:
-            line_json = json.loads(line)
-            #do basic preselection of lines
-            if (line_json['subreddit'] in subreddits_) and (len(line_json['title']) > 30) and (line_json['score'] > 20) \
-                    and (line_json['num_comments'] > 10) and (line_json['media'] is None):
-                desired_attributes = {'subreddit', 'score', 'author', 'created_utc', 'title', 'id', 'num_comments',
-                                      'downs'}  # Specify the attributes you want to keep
-                filtered_line = {key: value for key, value in line_json.items() if key in desired_attributes}
-                lines_in_subreddits.append(filtered_line)
-                subreddits_lines += 1
-        except (KeyError, json.JSONDecodeError) as err:
-            bad_lines += 1
-        file_lines += 1
-
-        # Log progress
-        if file_lines % 200_000 == 0:
-            logger.info(
-                f": {subreddits_lines:,} {file_lines:,} : {bad_lines:,} : {file_bytes_processed:,}:{(file_bytes_processed / file_size) * 100:.0f}%")
-
-        # Write the lines to the db file
-        if len(lines_in_subreddits) > 200_000:  #for now only opening json file once is fastest..
-            with open('./data/temp_10_12.json', 'w') as f:
-                json.dump(lines_in_subreddits, f)
-            con.execute("COPY submission_13_05 FROM  './data/temp_10_12.json' (FORMAT JSON, AUTO_DETECT true) ;")
-            lines_in_subreddits = []
-
-    #last bit of lines
-    with open('./data/temp_10_12.json', 'w') as f:
-        json.dump(lines_in_subreddits, f)
-    con.execute("COPY submission_13_05 FROM  './data/temp_10_12.json' (FORMAT JSON, AUTO_DETECT true) ;")
-    print('added lines', con.sql("SELECT COUNT(*) FROM submission_13_05"))
-
-    logger.info(f"Complete : {file_lines:,} : {bad_lines:,} : {subreddits_lines:,}")
+con = duckdb.connect("/cluster/work/coss/anmusso/victoria/loaded_data/loaded_comments.db")
 
 
 def get_comments(collection_name: str):
@@ -131,7 +32,7 @@ def get_submissions(collection_name: str):
     return df
 
 
-def read_data_file(input_file_name: str) -> pd.DataFrame:
+def file_to_pd(input_file_name: str) -> pd.DataFrame:
     # Create a list to store the interesting lines
     interesting_lines = []
 
@@ -163,7 +64,7 @@ def read_data_file(input_file_name: str) -> pd.DataFrame:
 def load_submissions_old():
     #input_file = './data/RS_2020-06_filtered.zst'
     input_file = './data/RC_2007-03.zst'
-    lines = read_data_file(input_file)
+    lines = file_to_pd(input_file)
     # we have to drop a few attributes for which sql is not able to determine a Type
     clean = lines.drop(['author_flair_background_color', 'link_flair_background_color', 'author_flair_css_class',
                         'author_flair_template_id', 'author_flair_text', 'gildings', 'all_awardings', 'category',
@@ -261,9 +162,10 @@ def subreddit_scores():
 
 
 if __name__ == '__main__':
-    con.sql("DROP TABLE IF EXISTS submission_13_05")
-    base_path = './data'
-    input_file_path = f'{base_path}/RS_2013-05.zst'
+
+    #con.sql("DROP TABLE IF EXISTS comments_20_05")
+    base_path = '/cluster/work/coss/anmusso/reddit'
+    input_file_path = f'{base_path}/comments/RC_2020-04.zst'
     subr = ['Republican',
             'democrats',
             'healthcare',
@@ -286,8 +188,8 @@ if __name__ == '__main__':
             'usa',
             'DefundPoliceNYC']
     start = time.time()
-    #extract_comments(subreddits=subr, input_file_name=input_file_path)
-    extract_submissions(subreddits=subr, input_file_name=input_file_path)
+    extract_comments(subreddits=subr, input_file_name=input_file_path)
+    #extract_submissions(subreddits=subr, input_file_name=input_file_path)
     print(f'Time: {time.time() - start}')
 
     #read_data_file(input_file_path)
