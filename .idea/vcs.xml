@@ -2,7 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/transformer_hdf5/model/all-MiniLM-L6-v2" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/transformer_hdf5/model/all-mpnet-base-v2" vcs="Git" />
   </component>
 </project>

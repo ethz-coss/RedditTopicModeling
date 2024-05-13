@@ -1,0 +1,8 @@
+set: S_05_2020, size:1010949 model:all-mpnet-base-v2, gpu:NVIDIA GeForce GTX 1080 Ti , time:1263.811691045761 
+set: S_05_2020, size:1010949 model:all-MiniLM-L6-v2, gpu:NVIDIA GeForce GTX 1080 Ti , time:406.34288573265076 
+set: S_05_2020, size:1010949 model:all-mpnet-base-v2, gpu:NVIDIA GeForce RTX 3090 , time:550.4865579605103 
+set: S_05_2020, size:1010949 model:all-MiniLM-L6-v2, gpu:NVIDIA GeForce RTX 3090 , time:257.0008306503296 
+set: 05S2020, size:1010949 model:all-MiniLM-L6-v2, gpu:NVIDIA GeForce RTX 3090 , time:256.4623260498047 
+set: 06S2020, size:1017459 model:multi-qa-mpnet-base-dot-v1, gpu:NVIDIA GeForce RTX 3090 , time:548.2273650169373 
+set: 06S2020, size:1017459 model:all-mpnet-base-v2, gpu:NVIDIA GeForce RTX 3090 , time:547.5811831951141 
+set: 06S2020, size:1017459 model:all-MiniLM-L6-v2, gpu:NVIDIA GeForce RTX 3090 , time:254.3178255558014 
