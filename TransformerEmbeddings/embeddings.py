@@ -5,6 +5,7 @@ import math
 
 #chunck the queries of database and not keep everything in memory
 batchsize = 10000
+base_model_path = '/cluster/work/coss/anmusso/victoria/embeddings/'
 
 
 # could pass model or uncomment model assignment
@@ -12,7 +13,7 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
     # model = SentenceTransformer("./model/all-MiniLM-L6-v2")
 
     start = 0
-    hf = h5py.File(f'/cluster/work/coss/anmusso/victoria/embeddings/{output_file}', 'w')
+    hf = h5py.File(f'{base_model_path}{output_file}', 'w')
 
     lines = db_queries.get_titles(table_name, sql_db, start, 100000) #load 100K lines from db
     

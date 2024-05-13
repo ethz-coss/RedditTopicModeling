@@ -12,8 +12,9 @@ ch = logging.StreamHandler()
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-temp_file_path_j = '/cluster/work/coss/anmusso/victoria/temp.json'
-temp_file_path_p = '/cluster/work/coss/anmusso/victoria/temp.parquet'
+base_path = 'cluster/work/coss/anmusso/victoria/'
+temp_file_path_j = f'{base_path}temp.json'
+temp_file_path_p = f'{base_path}temp.parquet'
 
 
 def _filter_comment(line_json):

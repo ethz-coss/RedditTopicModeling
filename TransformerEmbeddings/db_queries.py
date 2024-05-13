@@ -16,8 +16,9 @@ def get_subreddit_numbers(table_name, sql_db, subreddits):
      return l['NUM'].tolist()
 
 def get_attributes(attributes, numbers, table_name, sql_db):
-    atr_list_str = ','.join([f"'{atr}'" for atr in attributes])
-    df = sql_db.sql(f"SELECT {atr_list_str} FROM {table_name} WHERE num IN ({numbers}) ORDER BY num ").fetchdf
+    atr_list_str = ','.join([f"{atr}" for atr in attributes])
+    num_list_str = ','.join([f"'{num}'" for num in numbers])
+    df = sql_db.sql(f"SELECT {atr_list_str} FROM {table_name} WHERE num IN ({num_list_str}) ORDER BY num ").fetchdf()
     return df
 
 
@@ -67,8 +68,8 @@ def user_subreddit_relation( table_name, sql_db, subreddits):
     
 
 
-def subreddit_scores():
-    df = con.sql("WITH Scores AS ( "
+def subreddit_scores(sql_db):
+    df = sql_db.sql("WITH Scores AS ( "
                  "SELECT reddit_data.subreddit, COUNT() AS large_score FROM reddit_data WHERE score > 100 GROUP BY subreddit),"
                  "Comments AS ( "
                  "SELECT reddit_data.subreddit, COUNT(*) AS many_comments FROM reddit_data WHERE num_comments > 10 GROUP BY subreddit),"

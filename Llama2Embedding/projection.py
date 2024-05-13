@@ -324,5 +324,4 @@ def run_normalized_projection():
 
 if __name__ == '__main__':
     embeddings_from_collection('pdfs')
-    
-    #run_normalized_projection()
+    run_normalized_projection()

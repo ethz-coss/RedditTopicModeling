@@ -48,8 +48,7 @@ def run_example():
 
 
 if __name__ == '__main__':
-    #run_example()
-    print(chroma_client.list_collections())
+    run_example()
 
     
      
