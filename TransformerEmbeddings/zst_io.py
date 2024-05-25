@@ -1,9 +1,6 @@
 import zstandard
 from typing import List
-import os
-import json
-import logging
-import pandas as pd
+
 
 
 def read_and_decode(reader: zstandard.ZstdDecompressionReader, chunk_size: int, max_window_size: int, previous_chunk=None, bytes_read: int = 0) -> str:
@@ -46,3 +43,6 @@ def write_lines_zst(writer: zstandard.ZstdCompressionWriter, lines: List[str]):
     for line in lines:
         writer.write(line.encode('utf-8'))
         writer.write("\n".encode('utf-8'))
+
+
+read_lines_zst(file_name='./data/RC_2007-03.zst')

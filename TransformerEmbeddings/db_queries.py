@@ -15,6 +15,10 @@ def get_subreddit_numbers(table_name, sql_db, subreddits):
      l = sql_db.sql(f"SELECT num FROM {table_name} WHERE subreddit IN ({subr_list_str}) ").fetchnumpy()
      return l['NUM'].tolist()
 
+def get_all_numbers(table_name, sql_db):
+    df = sql_db.sql(f"SELECT num FROM {table_name}").fetchnumpy()
+    return df['NUM'].tolist()
+
 def get_attributes(attributes, numbers, table_name, sql_db):
     atr_list_str = ','.join([f"{atr}" for atr in attributes])
     num_list_str = ','.join([f"'{num}'" for num in numbers])
@@ -100,5 +104,6 @@ def subreddit_scores(sql_db):
                    align='left'))
     ])
     fig.show()
+
 
 

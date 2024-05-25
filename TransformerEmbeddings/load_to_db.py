@@ -12,9 +12,8 @@ ch = logging.StreamHandler()
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-base_path = 'cluster/work/coss/anmusso/victoria/'
-temp_file_path_j = f'{base_path}temp.json'
-temp_file_path_p = f'{base_path}temp.parquet'
+temp_file_path_j = '/cluster/work/coss/anmusso/victoria/temp.json'
+temp_file_path_p = '/cluster/work/coss/anmusso/victoria/temp.parquet'
 
 
 def _filter_comment(line_json):
@@ -72,7 +71,7 @@ def _add_to_db_json(good_lines, table_name, sql_db):
         json.dump(good_lines, f)
     sql_db.execute(
         f"COPY {table_name} FROM '{temp_file_path_j}' (FORMAT JSON, AUTO_DETECT true) ;")
-    print("added to collection", len(good_lines))
+    #print("added to collection", len(good_lines))
 
 
 #give option to create new table or not
@@ -81,11 +80,15 @@ def extract_comments(input_file_name: str, sql_db, table_name: str):
     reader_window_size: int = 2 ** 31
     good_lines = []
 
-    #create table in db
-    _create_comments_table(table_name, sql_db)
+    if ((table_name,) in sql_db.execute("SHOW TABLES;").fetchall()):
+        max_id = sql_db.sql(f"SELECT MAX(num) FROM {table_name}").fetchone()
+        good_lines_count = max_id[0] + 1
+    else: 
+        _create_comments_table(table_name, sql_db)
+        good_lines_count = 0
 
     #initialize logger variables
-    bad_lines, file_lines, file_bytes_processed, good_lines_count = 0, 0, 0, 0
+    bad_lines, file_lines, file_bytes_processed = 0, 0, 0
     file_size = os.stat(input_file_name).st_size
 
     # Loop through every line in the file
@@ -103,12 +106,12 @@ def extract_comments(input_file_name: str, sql_db, table_name: str):
         file_lines += 1
 
         # Log progress
-        if file_lines % 200_000 == 0:
+        if file_lines % 400_000 == 0:
             logger.info(
                 f": {good_lines_count:,} {file_lines:,} : {bad_lines:,} : {file_bytes_processed:,}:{(file_bytes_processed / file_size) * 100:.0f}%")
 
         # Write the lines to the db file
-        if len(good_lines) > 10_000:  #for now only opening json file once is fastest..
+        if len(good_lines) > 50_000:  #for now only opening json file once is fastest..
             _add_to_db_json(good_lines, table_name, sql_db)
             good_lines = []
 
@@ -124,11 +127,14 @@ def extract_submissions(input_file_name: str, sql_db, table_name: str):
     reader_window_size: int = 2 ** 31
     good_lines = []
 
-    #create table in db
-    _create_submissions_table(table_name, sql_db)
-
+    if ((table_name,) in sql_db.execute("SHOW TABLES;").fetchall()):
+        max_id = sql_db.sql(f"SELECT MAX(num) FROM {table_name}").fetchone()
+        good_lines_count = max_id[0] +1
+    else: 
+        _create_submissions_table(table_name, sql_db)
+        good_lines_count = 0
     #initialize tracking variables
-    bad_lines, file_lines, file_bytes_processed, good_lines_count = 0, 0, 0, 0
+    bad_lines, file_lines, file_bytes_processed = 0, 0, 0
     file_size = os.stat(input_file_name).st_size
 
     # Loop through every line in the file

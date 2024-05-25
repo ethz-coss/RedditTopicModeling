@@ -5,7 +5,6 @@ import math
 
 #chunck the queries of database and not keep everything in memory
 batchsize = 10000
-base_model_path = '/cluster/work/coss/anmusso/victoria/embeddings/'
 
 
 # could pass model or uncomment model assignment
@@ -13,7 +12,7 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
     # model = SentenceTransformer("./model/all-MiniLM-L6-v2")
 
     start = 0
-    hf = h5py.File(f'{base_model_path}{output_file}', 'w')
+    hf = h5py.File(f'/cluster/work/coss/anmusso/victoria/embeddings/{output_file}', 'w')
 
     lines = db_queries.get_titles(table_name, sql_db, start, 100000) #load 100K lines from db
     
@@ -37,6 +36,7 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
 def embeddings_from_file_id(ids, file_path ):
     embeddings = []
     hf = h5py.File(file_path, 'r')
+    M_embedd = None
 
     i = 0
     while i < len(ids):
@@ -46,7 +46,12 @@ def embeddings_from_file_id(ids, file_path ):
         while i < len(ids) and ids[i] // batchsize == batch_id:  #extract the needed ones
             embeddings.append(data_batch[ids[i] % batchsize])
             i += 1
-
-    M_embedd = np.matrix(embeddings)
+        if M_embedd is None:
+            M_embedd = np.matrix(embeddings)
+            embeddings = []
+        else:
+            temp = np.matrix(embeddings)
+            embeddings = []
+            M_embedd = np.vstack((M_embedd,temp))
 
     return M_embedd
