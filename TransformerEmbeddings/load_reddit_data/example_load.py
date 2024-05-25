@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from zst_io import read_lines_zst
+from transformer_hdf5.zst_io import read_lines_zst
 import pandas as pd
 
 # Create a logger to output progress in a pretty way

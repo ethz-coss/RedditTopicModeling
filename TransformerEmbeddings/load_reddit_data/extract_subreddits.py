@@ -3,7 +3,7 @@ from typing import List
 import os
 import json
 import logging
-from zst_io import read_lines_zst, write_lines_zst
+from transformer_hdf5.zst_io import read_lines_zst, write_lines_zst
 
 logger = logging.getLogger('subreddit_extraction')
 logger.setLevel(logging.DEBUG)
@@ -25,9 +25,10 @@ def extract_subreddits(subreddits: List[str], input_file_name: str, output_file_
     # Loop through every line in the file
     for line, file_bytes_processed in read_lines_zst(file_name=input_file_name, reader_window_size=reader_window_size, reader_chunk_size=reader_chunk_size):
         try:
-            # Load the line as JSON and check if the subreddit is in the list
             line_json = json.loads(line)
-            if line_json['subreddit'] in subreddits_:
+            #do basic preselection of lines
+            if (line_json['subreddit'] in subreddits_):
+                print(line_json.items())
                 lines_in_subreddits.append(line)
                 subreddits_lines += 1
         except (KeyError, json.JSONDecodeError) as err:
@@ -47,23 +48,31 @@ def extract_subreddits(subreddits: List[str], input_file_name: str, output_file_
 
 
 def example_subreddit_extraction():
-    base_path = '/Users/andrea/Desktop/PhD/Projects/Current/Reddit/data/comments/'
-    input_file_path = f'{base_path}/RS_2020-06.zst'
-    output_file_path = f'{base_path}/RS_2020-06_filtered.zst'
+    base_path = './../data'
+    input_file_path = f'{base_path}/RC_2010-12.zst'
+    output_file_path = f'{base_path}/RC_2010-12_filtered.zst'
     subr = ['Republican',
-            'Democrats',
+            'democrats',
             'healthcare',
             'Feminism',
             'nra',
             'education',
             'climatechange',
             'politics',
-            'random',
             'progressive',
             'The_Donald',
             'TrueChristian',
             'Trucks',
             'teenagers',
             'AskMenOver30',
-            'backpacking']
+            'backpacking',
+            'news',
+            'BlackLivesMatter',
+            'racism',
+            'news',
+            'usa',
+            'DefundPoliceNYC']
     extract_subreddits(subreddits=subr, input_file_name=input_file_path, output_file_name=output_file_path)
+
+
+example_subreddit_extraction()

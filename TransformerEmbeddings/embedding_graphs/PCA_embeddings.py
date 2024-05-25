@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.decomposition import PCA
 import example
-import reddit_projection
+from transformer_hdf5.old_code import reddit_projection
 import plotly.express as px
 
 collection_name = "Reddit-Comments"

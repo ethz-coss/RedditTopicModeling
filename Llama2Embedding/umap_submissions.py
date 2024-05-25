@@ -3,26 +3,23 @@ import example
 import reddit_projection
 import umap
 import plotly.express as px
+import numpy as np
+import duckdb_store
 
-collection_name = ("Reddit-Comments-2")
-data = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'climatechange', 'politics',
-        'random', 'teenagers', 'progressive', 'The_Donald', 'TrueChristian', 'Trucks', 'AskMenOver30',
-        'backpacking']
 
-data1 = ['climatechange', 'Feminism', 'democrats', 'Republican']
-data2 = ['healthcare', 'politics', 'AskMenOver30', 'nra']
-data3 = ["Feminism"]
-
-M_embedd, meta = reddit_projection.embeddings_from_collection(collection_name=collection_name, subreddits=data)
-
-#lines = reddit_projection.example_read_data('C:/Users/victo/PycharmProjects/RedditProject/data/RS_2020-06_filtered.zst')
-#id_dict = dict((item['id'], item) for item in lines)
-# print(meta[0])
-# print (id_dict)
-#titles = [id_dict[meta[i]['id']]['title'] for i in range(len(meta))]
-titles = [meta[i]['title'] for i in range(len(meta))]
+collection_name = "Reddit-Comments-2"
 collection = example.chroma_client.get_collection(collection_name)
 print(collection.count())
+
+
+df = duckdb_store.get_good_ids() #change to filter the right entries in the database
+ids = list(df['id'])
+
+#retrieve embeddings for posts within the subreddits
+data1 = ['Republican', 'democrats', 'healthcare', 'Feminism', 'nra', 'education', 'progressive', 'The_Donald']
+M_embedd, meta = reddit_projection.embeddings_from_collection_id(collection_name, ids=ids, subreddits=data1)
+titles = [meta[i]['title'] for i in range(len(meta))]
+
 
 # create dataframe
 df = pd.DataFrame(M_embedd)
@@ -54,4 +51,3 @@ fig_2d = px.scatter(
 )
 
 fig_2d.show()
-
