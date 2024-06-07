@@ -1,8 +1,9 @@
 import h5py
 import numpy as np
-import db_queries
+from TransformerEmbeddings.steps import db_queries
 import math
-
+import pandas as pd
+import config
 #chunck the queries of database and not keep everything in memory
 batchsize = 10000
 
@@ -12,7 +13,7 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
     # model = SentenceTransformer("./model/all-MiniLM-L6-v2")
 
     start = 0
-    hf = h5py.File(f'/cluster/work/coss/anmusso/victoria/embeddings/{output_file}', 'w')
+    hf = h5py.File(f'{config.EMBEDINGS_BASE_PATH}/{output_file}', 'w')
 
     lines = db_queries.get_titles(table_name, sql_db, start, 100000) #load 100K lines from db
     
@@ -34,24 +35,16 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
 
 
 def embeddings_from_file_id(ids, file_path ):
-    embeddings = []
+    chunck_ids = []
     hf = h5py.File(file_path, 'r')
-    M_embedd = None
 
-    i = 0
-    while i < len(ids):
-        batch_id = ids[i] // batchsize  #only extract needed batches from file
-        data_batch = hf[str(batch_id*batchsize)]  #load batch of 1K embeddings
-        #print(batch_id)
-        while i < len(ids) and ids[i] // batchsize == batch_id:  #extract the needed ones
-            embeddings.append(data_batch[ids[i] % batchsize])
-            i += 1
-        if M_embedd is None:
-            M_embedd = np.matrix(embeddings)
-            embeddings = []
-        else:
-            temp = np.matrix(embeddings)
-            embeddings = []
-            M_embedd = np.vstack((M_embedd,temp))
+    tuples = [(str(i//batchsize*batchsize),i%batchsize) for i in ids]
+
+    tuples = pd.DataFrame(tuples, columns=['batch', 'ids'])
+    tuples = tuples.groupby('batch').agg({'ids':lambda x:list(x)})
+    tuples = tuples.to_dict()['ids']
+    vectors = [hf[i][j] for (i,j) in tuples]
+    M_embedd = np.vstack(vectors)
+
 
     return M_embedd

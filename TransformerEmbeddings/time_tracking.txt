@@ -1,0 +1,1 @@
+size:39317370 model:all-MiniLM-L6-v2, gpu:NVIDIA GeForce RTX 2080 Ti , time:11238.692661523819 

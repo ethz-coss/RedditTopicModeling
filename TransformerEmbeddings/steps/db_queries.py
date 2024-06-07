@@ -19,6 +19,12 @@ def get_all_numbers(table_name, sql_db):
     df = sql_db.sql(f"SELECT num FROM {table_name}").fetchnumpy()
     return df['NUM'].tolist()
 
+def get_filtered_submissions(table_name, sql_db):
+    df = sql_db.sql(f"SELECT num FROM {table_name} WHERE score > 20 AND num_comments > 10").fetchnumpy()
+    return df['NUM'].tolist()
+
+
+
 def get_attributes(attributes, numbers, table_name, sql_db):
     atr_list_str = ','.join([f"{atr}" for atr in attributes])
     num_list_str = ','.join([f"'{num}'" for num in numbers])
