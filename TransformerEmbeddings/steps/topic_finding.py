@@ -1,5 +1,4 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
-import numpy as np
 
 
 def get_tfidf(table_name, sql_db):
@@ -13,15 +12,7 @@ def get_tfidf(table_name, sql_db):
     
     return tfidf_matrix, terms
 
-'''
-#have to figureout argsort for sparse matrix
-def get_top_terms(tfidf_matrix, terms, n=10):  #get_tts
-    tf_idf_transposed = tfidf_matrix.T
-    indices = tf_idf_transposed.argsort()[:, -n:]
-    top_n_words = {str(i): [(terms[j], tf_idf_transposed[i][j]) for j in indices[i]][::-1]
-                   for i in range(tfidf_matrix.shape[1])}
-    return top_n_words
-'''
+
 
 def get_top_terms(tfidf_matrix, terms, n=30):  #get_tts
     top_terms = []
@@ -34,12 +25,8 @@ def get_top_terms(tfidf_matrix, terms, n=30):  #get_tts
 
     return top_terms
 
-#returns clusters ranked by size
-def topic_sizes_ranked(table_name, sql_db):
-    df = sql_db.sql(f"SELECT COUNT(*) AS sizes, cluster FROM {table_name} GROUP BY cluster ORDER BY sizes DESC").fetchdf()
-    return df
 
-#returns clusters in order
+#returns cluster sizes in order starting with cluster -1
 def topic_sizes(table_name, sql_db):
     df = sql_db.sql(f"SELECT COUNT(*) AS sizes, cluster FROM {table_name} GROUP BY cluster ORDER BY cluster ASC").fetchdf()
     return df

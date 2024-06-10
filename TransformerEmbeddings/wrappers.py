@@ -5,7 +5,7 @@ import torch
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from TransformerEmbeddings.steps import db_queries, embeddings, load_to_db, topic_finding as tf, UMAP_embeddings as um
+from steps import db_queries, embeddings, load_to_db, topic_finding as tf, UMAP_embeddings as um
 import config
 
 duck_database = duckdb.connect(config.DATA_BASE_PATH)

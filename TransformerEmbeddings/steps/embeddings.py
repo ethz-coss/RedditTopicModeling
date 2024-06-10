@@ -1,8 +1,8 @@
 import h5py
 import numpy as np
-from TransformerEmbeddings.steps import db_queries
 import math
 import pandas as pd
+from steps import db_queries
 import config
 #chunck the queries of database and not keep everything in memory
 batchsize = 10000

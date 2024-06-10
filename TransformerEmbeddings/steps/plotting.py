@@ -3,6 +3,7 @@ import plotly.express as px
 import duckdb
 
 
+
 def submissions_timeline(table_name, sql_db, cluster_num):
     df = sql_db.sql(f"SELECT created_uct FROM {table_name} Where cluster = {cluster_num}").fetchdf()
 

@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from zst_io import read_lines_zst
+from steps.zst_io import read_lines_zst
 import pyarrow as pa
 import pyarrow.parquet as pq
 
