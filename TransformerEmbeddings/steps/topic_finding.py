@@ -34,7 +34,7 @@ def topic_sizes(table_name, sql_db):
 #returns count of submissions with that term per cluster
 def get_terms_count(terms, table_name, sql_db):
     conditions = " OR ".join([f"title LIKE '%{term}%'" for term in terms])
-
+    print(conditions)
     df = sql_db.sql(f"SELECT COUNT(*) AS count, cluster FROM {table_name}"
                     f" WHERE {conditions} GROUP BY cluster ORDER BY cluster").fetchdf()
     return df

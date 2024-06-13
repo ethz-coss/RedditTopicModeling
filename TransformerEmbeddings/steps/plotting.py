@@ -5,26 +5,24 @@ import duckdb
 
 
 def submissions_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql(f"SELECT created_uct FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+    df = sql_db.sql(f"SELECT created_utc FROM {table_name} Where cluster = {cluster_num}").fetchdf()
 
+    df = df.sort_values(by='created_utc')
     # Convert the 'timestamp' column to datetime
-    df['created_uct'] = pd.to_datetime(df['created_uct'])
-    df = df.sort_values(by='created_uct')
-
+    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
     # Calculate the cumulative count of submissions
-    df['cumulative_submissions'] = df.index + 1
-
+    df['cumulative_submissions'] = range(1, len(df) + 1)
     # Create the plot using Plotly
-    fig = px.line(df, x='created_uct', y='cumulative_submissions', title='Total Number of Submissions Over Time')
+    fig = px.line(df, x='created_utc', y='cumulative_submissions', title='Total Number of Submissions Over Time')
 
     # Show the plot
-    fig.show()
-
+    fig.write_html("./submissions_timeline.html")
 
 def subreddit_timeline(table_name, sql_db, cluster_num):
-        df = sql_db.sql("SELECT created_uct, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-        df['created_uct'] = pd.to_datetime(df['timestamp'])
-        df = df.sort_values(by='created_uct')
+        df = sql_db.sql("SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+        df = df.sort_values(by='created_utc')
+        df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
+
 
         # Calculate the cumulative number of unique subreddits over time
         unique_subreddits = set()
@@ -36,17 +34,18 @@ def subreddit_timeline(table_name, sql_db, cluster_num):
 
         df['cumulative_unique_subreddits'] = cumulative_counts
 
-        fig = px.line(df, x='created_uct', y='cumulative_unique_subreddits',
+        fig = px.line(df, x='created_utc', y='cumulative_unique_subreddits',
                       title='Cumulative Number of Unique Subreddits Over Time')
 
         # Show the plot
-        fig.show()
+        fig.write_html("./subreddit_timeline.html")
 
 
 def author_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql("SELECT created_uct, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-    df['created_uct'] = pd.to_datetime(df['timestamp'])
-    df = df.sort_values(by='created_uct')
+    df = sql_db.sql("SELECT created_utc, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+    df = df.sort_values(by='created_utc')
+    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
+
 
     # Calculate the cumulative number of unique subreddits over time
     unique_subreddits = set()
@@ -58,18 +57,18 @@ def author_timeline(table_name, sql_db, cluster_num):
 
     df['cumulative_unique_authors'] = cumulative_counts
 
-    fig = px.line(df, x='created_uct', y='cumulative_unique_authors',
+    fig = px.line(df, x='created_utc', y='cumulative_unique_authors',
                   title='Cumulative Number of Unique Authors Over Time')
 
     # Show the plot
-    fig.show()
+    fig.write_html("./unique_author_timeline.html")
 
 def top_subreddit_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql("SELECT created_uct, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-    df['created_uct'] = pd.to_datetime(df['created_uct'])
+    df = sql_db.sql("SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
 
     # Extract the date from the timestamp
-    df['date'] = df['created_uct'].dt.date
+    df['date'] = df['created_utc'].dt.date
 
     # Group by date and get the top subreddit for each day
     top_subreddits = df.groupby('date')['subreddit'].agg(lambda x: x.mode()[0])
@@ -82,6 +81,6 @@ def top_subreddit_timeline(table_name, sql_db, cluster_num):
                  labels={'subreddit': 'Top Subreddit'})
 
     # Show the plot
-    fig.show()
+    fig.write_html("./top_subreddit_timeline.html")
 
 

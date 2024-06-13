@@ -1,11 +1,12 @@
-import cuml
+#import cuml
 import time
 import duckdb
+import numpy as np
 import torch
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from steps import db_queries, embeddings, load_to_db, topic_finding as tf, UMAP_embeddings as um
+from steps import db_queries, embeddings, plotting, load_to_db, topic_finding as tf, UMAP_embeddings as um
 import config
 
 duck_database = duckdb.connect(config.DATA_BASE_PATH)
@@ -29,7 +30,6 @@ def extract_filter_load():
 
 
 def compute_embeddings():
-    model_name = config.MODEL_NAME
     model = SentenceTransformer(config.MODEL_PATH)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -41,38 +41,40 @@ def compute_embeddings():
         else:
             tablename = 'submissions'
 
-        embeddings_file = f'./embeddings_{tablename}_{model_name}.h5py'
+        embeddings_file = config.EMBEDDINGS_FILE
         num += embeddings.new_load_embeddings(table_name=tablename, sql_db=duck_database, output_file=embeddings_file,
                                               model=model, device=device)
 
     #logg time with gpu
     with open('time_tracking.txt', 'a') as f:  #loggs time into file for comparison
-        f.write(f"size:{num} model:{model_name}, gpu:{torch.cuda.get_device_name(0)} , time:{time.time() - start} \n")
+        f.write(f"size:{num} model:{config.MODEL_PATH}, gpu:{torch.cuda.get_device_name(0)} , time:{time.time() - start} \n")
 
 
 def compute_umap():
-    model_name = config.MODEL_NAME
-
+    start = time.time()
     for C_or_S in config.ANALYSE_SET:
         if C_or_S == 'S':
             table_name = 'submissions'
         else:
             table_name = 'comments'
 
-        file_path = f"{config.EMBEDINGS_BASE_PATH}/embeddings_{table_name}_{model_name}.h5py"
+        file_path = config.EMBEDDINGS_FILE
         if config.FILTER_UMAP:
             subr_nums = db_queries.get_filtered_submissions(table_name=table_name, sql_db=duck_database)
         else:
             subr_nums = db_queries.get_all_numbers(table_name=table_name, sql_db=duck_database)
+        print('got ids')
         M_embedd = embeddings.embeddings_from_file_id(subr_nums, file_path)
         print('done retrieving embeddings', M_embedd.shape)
+        M_embedd = M_embedd.astype(np.int8)
         coordinates = um.UMAP_to_df_gpu(M_embedd, n_neighbors=config.UMAP_N_Neighbors,
                                         n_components=config.UMAP_COMPONENTS, min_dist=config.UMAP_MINDIST)
         del M_embedd
 
         coordinates.columns = [str(i) for i in range(config.UMAP_COMPONENTS)]
         coordinates["num"] = subr_nums
-        coordinates.to_parquet(f'{config.EMBEDINGS_BASE_PATH}/{table_name}_coordinates.parquet', engine='pyarrow', compression='snappy')
+        coordinates.to_parquet(f'{config.EMBEDDINGS_BASE_PATH}/{table_name}_{config.PCA_COMPONENTS}_coordinates.parquet', engine='pyarrow', compression='snappy')
+        print('umapped with no problems in ', time.time()-start)
 
 
 def hdbscan_clustering():
@@ -85,7 +87,7 @@ def hdbscan_clustering():
             old_table = 'comments'
 
         #load coordinates from file
-        coordinates = pd.read_parquet(f'{config.EMBEDINGS_BASE_PATH}/{old_table}_coordinates.parquet', engine='pyarrow')
+        coordinates = pd.read_parquet(f'{config.EMBEDDINGS_BASE_PATH}/{old_table}_{config.PCA_COMPONENTS}_coordinates.parquet', engine='pyarrow')
 
         scanner = cuml.cluster.hdbscan.HDBSCAN(min_cluster_size=config.HDBS_MIN_CLUSTERSIZE)
         clusters = scanner.fit_predict(coordinates.iloc[:, :-1])
@@ -100,6 +102,7 @@ def hdbscan_clustering():
         duck_database.sql(f"DROP TABLE IF EXISTS {info_table}")
         duck_database.sql(
             f"CREATE TABLE {info_table} AS SELECT * FROM {old_table} AS sub JOIN umap_coordinates ON (umap_coordinates.num = sub.num); ")
+        print('done')
 
 
 def tfidf_topterms_compute():
@@ -133,10 +136,11 @@ def show_info(top_words, sizes):
     print(blm_rank, 'top cluster: ', cl_num)
     print('size of top cluster: ', sizes[cl_num + 1])
     print('top words of top cluster: ', top_words[cl_num + 1])
+    print('top words of second cluster: ', top_words[blm_rank['cluster'][2]] )
     print('top subreddits of top cluster: ', tf.get_clusters_subreddit(cl_num, table, duck_database))
 
     print('top clusters of BLM subreddit: ', tf.get_subreddit_clusters('BlackLivesMatter', table, duck_database))
 
 
 if __name__ == '__main__':
-   compute_umap()
+    compute_umap()
