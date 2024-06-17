@@ -31,9 +31,9 @@ def _filter_comment(line_json):
 def _filter_submission(line_json):
     b = False
 
-    if ((config.FILTER == False) and (line_json['title']) > 20) and (line_json['media'] is None):
+    if ((config.FILTER == False) and (len(line_json['title'])) > 20) and (line_json['media'] is None):
         b = True
-    if (config.FILTER == True) and (line_json['title'] > 20) and (line_json['media'] is None) and \
+    if (config.FILTER == True) and (len(line_json['title']) > 20) and (line_json['media'] is None) and \
             (line_json['score'] > 20) and (line_json['num_comments'] > 10):
         b = True
 

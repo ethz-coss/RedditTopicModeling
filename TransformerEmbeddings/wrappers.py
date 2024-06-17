@@ -122,10 +122,6 @@ def show_info(top_words, sizes):
 
 
 if __name__ == '__main__':
-    extract_filter_load()
-    print('loaded')
-    compute_embeddings()
-    print('embedded')
     compute_umap()
     print('umaped')
     hdbscan_clustering()
