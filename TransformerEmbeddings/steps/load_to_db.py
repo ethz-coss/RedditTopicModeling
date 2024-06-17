@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from steps.zst_io import read_lines_zst
+import config
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -17,19 +18,26 @@ temp_file_path_p = '/cluster/work/coss/anmusso/victoria/temp.parquet'
 
 
 def _filter_comment(line_json):
-    
-    if (len(line_json['body']) > 20):
+    if ((config.FILTER == True) and (len(line_json['body']) > 20)) or (config.FILTER == False):
         desired_attributes = {'score', 'subreddit', 'author', 'created_utc', 'id',
                               'parent_id'}  # Specify the attributes you want to keep
         filtered = {key: value for key, value in line_json.items() if key in desired_attributes}
-        filtered['title'] = line_json['body'] # rename to create consistency with submissions
+        filtered['title'] = line_json['body']  # rename to create consistency with submissions
         return filtered
     else:
         return None
 
 
 def _filter_submission(line_json):
-    if (len(line_json['title']) > 20) and (line_json['media'] is None):
+    b = False
+
+    if ((config.FILTER == False) and (line_json['title']) > 20) and (line_json['media'] is None):
+        b = True
+    if (config.FILTER == True) and (line_json['title'] > 20) and (line_json['media'] is None) and \
+            (line_json['score'] > 20) and (line_json['num_comments'] > 10):
+        b = True
+
+    if b:
         desired_attributes = {'subreddit', 'score', 'author', 'created_utc', 'title', 'id', 'num_comments',
                               'upvote_ratio'}  # Specify the attributes you want to keep
         return {key: value for key, value in line_json.items() if key in desired_attributes}
@@ -51,17 +59,18 @@ def _create_submissions_table(table_name, sql_db):
         "created_utc INTEGER, title VARCHAR, id VARCHAR, num_comments INTEGER, upvote_ratio DOUBLE )")
 
 
-def _add_to_db_parquet(good_lines, table_name, sql_db): #maybe this isnt working because i need to get all the dicts into the same oder first
+def _add_to_db_parquet(good_lines, table_name,
+                       sql_db):  #maybe this isnt working because i need to get all the dicts into the same oder first
     tables = []
     with open(temp_file_path_p, 'wb') as f:
         for d in good_lines:
             table = pa.Table.from_pydict({key: [d[key]] for key in d})
             tables.append(table)
         # Write the final_table to a Parquet file
-        pq.write_table(table = pa.concat_tables(tables), where = f)
+        pq.write_table(table=pa.concat_tables(tables), where=f)
         #pa.parquet.write_table(pa.concat_tables(tables), f)
 
-    sql_db.execute( f"COPY {table_name} FROM '{temp_file_path_p}' (FORMAT PARQUET);")
+    sql_db.execute(f"COPY {table_name} FROM '{temp_file_path_p}' (FORMAT PARQUET);")
     print("added to collection", len(good_lines))
 
 
@@ -83,8 +92,9 @@ def extract_comments(input_file_name: str, sql_db, table_name: str):
         max_id = sql_db.sql(f"SELECT MAX(num) FROM {table_name}").fetchone()
         if max_id[0] is not None:
             good_lines_count = max_id[0] + 1
-        else: good_lines_count = 0
-    else: 
+        else:
+            good_lines_count = 0
+    else:
         _create_comments_table(table_name, sql_db)
         good_lines_count = 0
 
@@ -132,8 +142,9 @@ def extract_submissions(input_file_name: str, sql_db, table_name: str):
         max_id = sql_db.sql(f"SELECT MAX(num) FROM {table_name}").fetchone()
         if max_id[0] is not None:
             good_lines_count = max_id[0] + 1
-        else: good_lines_count = 0
-    else: 
+        else:
+            good_lines_count = 0
+    else:
         _create_submissions_table(table_name, sql_db)
         good_lines_count = 0
     #initialize tracking variables
