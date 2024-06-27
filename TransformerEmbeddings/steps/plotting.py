@@ -2,6 +2,22 @@ import pandas as pd
 import plotly.express as px
 import duckdb
 
+def submissions_per_day(table_name, sql_db, cluster_num):
+    df = sql_db.sql(f"SELECT created_utc FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+
+    df = df.sort_values(by='created_utc')
+    # Convert the 'timestamp' column to datetime
+    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
+
+    df['date'] = df['created_utc'].dt.date
+    entries_per_day = df.groupby('date').size().reset_index(name='count')
+
+    # Create a bar chart with Plotly
+    fig = px.bar(entries_per_day, x='date', y='count', title='Entries per Day',
+                 labels={'date': 'Date', 'count': 'Number of Entries'})
+
+    # Show the plot
+    fig.write_html(f"./submissions_per_day_{cluster_num}.html")
 
 
 def submissions_timeline(table_name, sql_db, cluster_num):
@@ -16,10 +32,10 @@ def submissions_timeline(table_name, sql_db, cluster_num):
     fig = px.line(df, x='created_utc', y='cumulative_submissions', title='Total Number of Submissions Over Time')
 
     # Show the plot
-    fig.write_html("./submissions_timeline.html")
+    fig.write_html(f"./submissions_timeline_{cluster_num}.html")
 
 def subreddit_timeline(table_name, sql_db, cluster_num):
-        df = sql_db.sql("SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+        df = sql_db.sql(f"SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
         df = df.sort_values(by='created_utc')
         df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
 
@@ -38,11 +54,11 @@ def subreddit_timeline(table_name, sql_db, cluster_num):
                       title='Cumulative Number of Unique Subreddits Over Time')
 
         # Show the plot
-        fig.write_html("./subreddit_timeline.html")
+        fig.write_html(f"./subreddit_timeline_{cluster_num}.html")
 
 
 def author_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql("SELECT created_utc, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+    df = sql_db.sql(f"SELECT created_utc, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
     df = df.sort_values(by='created_utc')
     df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
 
@@ -61,10 +77,10 @@ def author_timeline(table_name, sql_db, cluster_num):
                   title='Cumulative Number of Unique Authors Over Time')
 
     # Show the plot
-    fig.write_html("./unique_author_timeline.html")
+    fig.write_html(f"./unique_author_timeline_{cluster_num}.html")
 
 def top_subreddit_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql("SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+    df = sql_db.sql(f"SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
     df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
 
     # Extract the date from the timestamp

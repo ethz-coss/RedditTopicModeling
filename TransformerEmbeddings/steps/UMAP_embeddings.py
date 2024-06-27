@@ -15,7 +15,6 @@ def UMAP_embeddings(subr_nums, file_path):
 
         M_embedd = embeddings.embeddings_from_file_id(subr_nums, file_path)
         print('done retrieving embeddings', M_embedd.shape)
-        M_embedd = M_embedd.astype(np.int8)
         coordinates = UMAP_to_df_gpu(M_embedd, n_neighbors=config.UMAP_N_Neighbors,
                                         n_components=config.UMAP_COMPONENTS, min_dist=config.UMAP_MINDIST)
         coordinates.columns = [str(i) for i in range(config.UMAP_COMPONENTS)]

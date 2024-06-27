@@ -19,10 +19,10 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
 
     while len(lines) > 0:
         #load and save embeddings in chuncks of 10K (Batchsize)
-        embeddings = model.encode(lines, device=device, precision='float32')
-        embeddings = np.array(embeddings, dtype=np.int8)
+        embeddings = model.encode(lines, device=device)
+        embeddings = np.array(embeddings)
         hf.create_dataset(str(start), data=embeddings)
-        print(f'done embedding batch{start}')
+        print(f'done embedding batch{start}', type(embeddings))
         start += len(lines)
         lines = db_queries.get_titles(table_name, sql_db, start, BATCHSIZE)
 

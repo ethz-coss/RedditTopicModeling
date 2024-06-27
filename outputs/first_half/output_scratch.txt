@@ -1,0 +1,18 @@
+/cluster/home/anmusso/victoria/reddit_env/bin/python
+top cluster:  344
+size of top cluster:  1471
+top words of top cluster:  [('racist', 0.6019332823662601), ('racism', 0.41055071208054195), ('white', 0.4041481810937643), ('black', 0.32296091893433243), ('race', 0.1780650347207979), ('people', 0.16781935641729032), ('slavery', 0.09924925244458986), ('women', 0.07648085111750873), ('racial', 0.07639988843778102), ('blackpeopletwitter', 0.06793848408565457), ('racists', 0.06639849904337183), ('interracial', 0.06083717472116587), ('privilege', 0.05805139681421062), ('whites', 0.054571348884129296), ('men', 0.051459530823776314), ('oppression', 0.05072739569390148), ('african', 0.05063179851998558), ('just', 0.04760870807645961), ('slave', 0.04519824353180278), ('oppressed', 0.04190523992104905), ('minorities', 0.04190523992104905), ('slaves', 0.041059838211694163), ('person', 0.038120414520998146), ('supremacists', 0.0379172660890165), ('like', 0.03731562551416587), ('doxx', 0.0370512590369282), ('woman', 0.03685163739886944), ('dating', 0.036311303010434955), ('blacks', 0.03567020418413045), ('american', 0.034500059690530396), ('man', 0.03442810237226435), ('races', 0.03349035286758924), ('website', 0.030469834911651464), ('don', 0.030381440637463307), ('hate', 0.028135054881959786), ('supremacist', 0.026873520603981692), ('saying', 0.02664709019450382), ('racially', 0.02658462420743005), ('fragilewhiteredditor', 0.026209007441708426), ('america', 0.026103650928885804), ('mixed', 0.0256639115204752), ('fragile', 0.025221460132519666), ('anti', 0.02393212206162362), ('post', 0.023456852112790378), ('supremacy', 0.02281102122871898), ('couples', 0.02232690191172616), ('biracial', 0.022122608989514864), ('jerky', 0.022122608989514864), ('color', 0.021888316209621523), ('matter', 0.021728595298231408)]
+top subreddits of top cluster:                  subreddit  count
+0        unpopularopinion     61
+1          TumblrInAction     42
+2    FragileWhiteRedditor     38
+3    insanepeoplefacebook     35
+4      BlackPeopleTwitter     33
+..                    ...    ...
+557              Rainbow6      1
+558             copypasta      1
+559           altgonewild      1
+560              dndmemes      1
+561             fightporn      1
+
+[562 rows x 2 columns]

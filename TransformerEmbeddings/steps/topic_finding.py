@@ -7,6 +7,7 @@ def get_tfidf(table_name, sql_db):
     docs = df['document'].tolist()
 
     vectorizer = TfidfVectorizer(stop_words='english')
+    #vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(docs)
     terms = vectorizer.get_feature_names_out()    
     
@@ -14,7 +15,7 @@ def get_tfidf(table_name, sql_db):
 
 
 
-def get_top_terms(tfidf_matrix, terms, n=30):  #get_tts
+def get_top_terms(tfidf_matrix, terms, n=50):  #get_tts
     top_terms = []
 
     for i in range(tfidf_matrix.shape[0]):

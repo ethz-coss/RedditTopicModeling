@@ -4,6 +4,7 @@ import duckdb
 import numpy as np
 import torch
 import pandas as pd
+import local
 from sentence_transformers import SentenceTransformer
 
 from steps import db_queries, embeddings, hdbscan, plotting, load_to_db, topic_finding as tf, UMAP_embeddings as um
@@ -62,7 +63,8 @@ def compute_umap():
     file_path = config.EMBEDDINGS_FILE
 
     subr_nums = db_queries.get_all_numbers(table_name=table_name, sql_db=duck_database)
-
+    #subr_nums = [subr_nums[i] for i in range(0,2_000_000,2)]
+    subr_nums = subr_nums[0:1_000_000]
     coordinates = um.UMAP_embeddings(subr_nums=subr_nums, file_path=file_path)
 
     coordinates["num"] = subr_nums
@@ -73,7 +75,7 @@ def compute_umap():
 def hdbscan_clustering():
 
     if config.C_or_S == 'S':
-        info_table = 'submissions_info'
+        info_table = 'submissions_info_filtered'
         old_table = 'submissions'
     else:
         info_table = 'comments_info'
@@ -84,9 +86,10 @@ def hdbscan_clustering():
     #adds clusters joined on num to info_table
     hdbscan.hdbscan_coordinates(coordinates=coordinates, old_table=old_table, info_table=info_table, sql_db=duck_database)
 
+
 def tfidf_topterms_compute():
     if config.C_or_S == 'S':
-        info_table = 'submissions_info'
+        info_table = 'submissions_info_filtered'
         old_table = 'submissions'
     else:
         info_table = 'comments_info'
@@ -102,7 +105,7 @@ def tfidf_topterms_compute():
 
 def show_info(top_words, sizes):
     if config.C_or_S == 'S':
-        table = 'submissions_info'
+        table = 'submissions_info_filtered'
     else:
         table = 'comments_info'
 
@@ -112,10 +115,19 @@ def show_info(top_words, sizes):
     if cl_num == -1:
         cl_num = blm_rank['cluster'][1]
 
+    print('total clusters:', len(sizes))
     print(blm_rank, 'top cluster: ', cl_num)
     print('size of top cluster: ', sizes[cl_num + 1])
     print('top words of top cluster: ', top_words[cl_num + 1])
-    print('top words of second cluster: ', top_words[blm_rank['cluster'][2]] )
+
+    cl_2 = blm_rank['cluster'][2]
+    print('size of 2. cluster: ', sizes[cl_2 + 1])
+    print('top words of 2. cluster: ', top_words[cl_2 + 1])
+
+    cl_2 = blm_rank['cluster'][3]
+    print('size of 2. cluster: ', sizes[cl_2 + 1])
+    print('top words of 2. cluster: ', top_words[cl_2 + 1])
+
     print('top subreddits of top cluster: ', tf.get_clusters_subreddit(cl_num, table, duck_database))
 
     print('top clusters of BLM subreddit: ', tf.get_subreddit_clusters('BlackLivesMatter', table, duck_database))
@@ -123,7 +135,10 @@ def show_info(top_words, sizes):
 
 if __name__ == '__main__':
     compute_umap()
-    print('umaped')
+    print('umapped')
     hdbscan_clustering()
     print('clustered')
-
+    top_words, sizes_list = tfidf_topterms_compute()
+    print('tfidfed')
+    show_info(top_words, sizes_list)
+    local.do_plots()
