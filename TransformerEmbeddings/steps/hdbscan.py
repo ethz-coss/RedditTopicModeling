@@ -10,8 +10,8 @@ import config
 
 
 def hdbscan_coordinates(coordinates, old_table, info_table, sql_db):
-    #scanner = cuml.cluster.hdbscan.HDBSCAN(min_cluster_size=config.HDBS_MIN_CLUSTERSIZE, min_samples=config.HDBS_MIN_SAMPLES)
-    scanner = cuml.cluster.hdbscan.HDBSCAN(min_cluster_size=config.HDBS_MIN_CLUSTERSIZE, max_cluster_size = 1000)
+    scanner = cuml.cluster.hdbscan.HDBSCAN(min_cluster_size=config.HDBS_MIN_CLUSTERSIZE, min_samples=config.HDBS_MIN_SAMPLES, max_cluster_size = 10000)
+    #scanner = cuml.cluster.hdbscan.HDBSCAN(min_cluster_size=config.HDBS_MIN_CLUSTERSIZE, max_cluster_size = 1000)
     clusters = scanner.fit_predict(coordinates.iloc[:, :-1])  #(last collum is num, not a coordinate)
 
     # save to table

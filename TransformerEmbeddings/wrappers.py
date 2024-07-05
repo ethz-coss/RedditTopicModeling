@@ -64,7 +64,7 @@ def compute_umap():
 
     subr_nums = db_queries.get_all_numbers(table_name=table_name, sql_db=duck_database)
     #subr_nums = [subr_nums[i] for i in range(0,2_000_000,2)]
-    subr_nums = subr_nums[0:1_000_000]
+    #subr_nums = subr_nums[300_000:1_300_000]
     coordinates = um.UMAP_embeddings(subr_nums=subr_nums, file_path=file_path)
 
     coordinates["num"] = subr_nums
@@ -131,14 +131,18 @@ def show_info(top_words, sizes):
     print('top subreddits of top cluster: ', tf.get_clusters_subreddit(cl_num, table, duck_database))
 
     print('top clusters of BLM subreddit: ', tf.get_subreddit_clusters('BlackLivesMatter', table, duck_database))
-
+    return cl_num
 
 if __name__ == '__main__':
+    extract_filter_load()
+    print('loaded')
+    compute_embeddings()
+    print('embedded')
     compute_umap()
     print('umapped')
     hdbscan_clustering()
     print('clustered')
     top_words, sizes_list = tfidf_topterms_compute()
     print('tfidfed')
-    show_info(top_words, sizes_list)
-    local.do_plots()
+    cl_num = show_info(top_words, sizes_list)
+    local.do_plots(cl_num)

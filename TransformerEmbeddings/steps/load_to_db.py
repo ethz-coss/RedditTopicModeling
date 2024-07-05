@@ -36,7 +36,7 @@ def _filter_submission(line_json):
     if ((config.FILTER == False) and (len(line_json['title'])) > 20) and (line_json['media'] is None):
         b = True
     if (config.FILTER == True) and (len(line_json['title']) > 20) and (line_json['media'] is None) and \
-            (line_json['score'] > 20) and (line_json['num_comments'] > 10) and (line_json['subreddit'] not in non_eng_subr):
+            (line_json['score'] > 20) and (line_json['num_comments'] > 10):
         b = True
 
     if b:

@@ -8,9 +8,9 @@ EMBEDDINGS_BASE_PATH = '/cluster/work/coss/anmusso/victoria/embeddings/'
 
 #adjust these 3 parameters
 MODEL_PATH = f'/cluster/work/coss/anmusso/victoria/model/all-MiniLM-L6-v2'
-EMBEDDINGS_FILE = '/cluster/work/coss/anmusso/victoria/embeddings/embeddings_eng_all-MiniLM-L6-v2_filtered.h5py' #where embeddingfiles will be saved
-COORDINATES_FILE = '/cluster/work/coss/anmusso/victoria/coordinates/submissions_coordinates_eng_filtered.parquet'
-DATA_BASE_PATH = '/cluster/work/coss/anmusso/victoria/loaded_data/loaded_data_eng_filtered.db'
+EMBEDDINGS_FILE = '/cluster/work/coss/anmusso/victoria/embeddings/submissions_all-MiniLM-L6-v2_filtered.h5py' #where embeddingfiles will be saved
+COORDINATES_FILE = '/cluster/work/coss/anmusso/victoria/coordinates/submissions_coordinates_filtered.parquet'
+DATA_BASE_PATH = '/cluster/work/coss/anmusso/victoria/loaded_data/loaded_submissions_filtered.db'
 
 
 FILTER = True
@@ -22,8 +22,8 @@ UMAP_MINDIST = 0.01
 UMAP_BATCHSIZE =4_000_000
 
 
-HDBS_MIN_CLUSTERSIZE= 100
-#HDBS_MIN_SAMPLES = 100
+HDBS_MIN_CLUSTERSIZE= 200
+HDBS_MIN_SAMPLES = 75
 
 PCA_COMPONENTS = 50
 

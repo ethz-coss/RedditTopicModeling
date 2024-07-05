@@ -35,13 +35,13 @@ def new_load_embeddings(table_name: str, sql_db, output_file: str, model, device
 def embeddings_from_file_id(ids, file_path):
     hf = h5py.File(file_path, 'r')
 
-    tuples = [(str((i // BATCHSIZE) * BATCHSIZE), i % BATCHSIZE) for i in ids]
+    tuples = [((i // BATCHSIZE) * BATCHSIZE, i % BATCHSIZE) for i in ids]
 
     tuples = pd.DataFrame(tuples, columns=['batch', 'ids'])
     tuples = tuples.groupby('batch').agg({'ids': lambda x: list(x)})
     tuples = tuples.to_dict()['ids']
 
-    vectors = [hf[i][j] for i, j in tuples.items()]
+    vectors = [hf[str(i)][j] for i, j in tuples.items()]
     M_embedd = np.vstack(vectors)
 
     return M_embedd
