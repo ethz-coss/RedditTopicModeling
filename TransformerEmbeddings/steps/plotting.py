@@ -2,44 +2,89 @@ import pandas as pd
 import plotly.express as px
 import duckdb
 
+def check(table_name, sql_db, cluster_num):
+    df = sql_db.sql(f"SELECT COUNT(*) AS total, author FROM {table_name} Where cluster = {cluster_num} GROUP BY author ORDER BY total DESC ").fetchdf()
+    print(df)
 
-def submissions_per_day(table_name, sql_db, cluster_num):
-    df = sql_db.sql(f"SELECT created_utc FROM {table_name} Where cluster = {cluster_num}").fetchdf()
+def top_subreddits(table_name, sql_db, cluster_num):
+    df = sql_db.sql(f"SELECT subreddit, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
 
-    df = df.sort_values(by='created_utc')
-    # Convert the 'timestamp' column to datetime
-    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
-    df['date'] = df['created_utc'].dt.date
-    entries_per_day = df.groupby('date').size().reset_index(name='count')
-    df.rename(columns={'created_utc': 'date'}, inplace=True)
+    # Aggregate the data by subreddit
+    subreddit_counts = df['subreddit'].value_counts()
 
-    # Create a bar chart with Plotly
-    fig = px.line(entries_per_day, x='date', y='count', title='Entries per Day',
-                 labels={'date': 'created_utc', 'count': 'Number of Entries'}, markers=True, template='plotly_white')
+    # Separate top 6 subreddits and others
+    top = subreddit_counts.nlargest(20)
+    others = subreddit_counts.iloc[20:].sum()
 
+    # Prepare data for pie chart
+    labels = list(top.index) + ['Other']
+    values = list(top.values) + [others]
 
-    fig.add_shape(
-        type='line',
-        x0='2020-05-25',
-        x1='2020-05-25',
-        y0=0,
-        y1=max(entries_per_day['count']),
-        line=dict(color='red', width=1)
+    # Create pie chart
+    fig = px.pie(
+        names=labels,
+        values=values,
+        title="Subreddit Distribution"
+    )
+
+    fig.update_traces(
+        text=[f"{v}" for v in values],
+        textinfo='text',
+        hovertemplate='%{label}: %{value} submissions<extra></extra>'
     )
 
     fig.update_layout(
         title_font_size=24,
-        xaxis_title_font_size=20,
-        yaxis_title_font_size=20,
-        xaxis_tickfont_size=14,
-        yaxis_tickfont_size=14
+        font=dict(
+            size=14,
+            color='black'
+        )
     )
 
     # Show the plot
-    fig.write_html(f"./submissions_per_day_{cluster_num}.html")
+    fig.write_html(f"./subreddit_distribution_{cluster_num}.html")
+
+
+def submissions_per_authors(table_name, sql_db, cluster_num):
+    df = sql_db.sql(f"SELECT subreddit, author FROM {table_name} Where cluster = {cluster_num} AND author != '[deleted]'").fetchdf()
+
+    author_submission_counts = df['author'].value_counts().reset_index()
+    author_submission_counts.columns = ['author', 'submission_count']
+
+    # Step 2: Count the number of authors for each submission count
+    submission_count_distribution = author_submission_counts['submission_count'].value_counts().reset_index()
+    submission_count_distribution.columns = ['submission_count', 'author_count']
+
+    # Step 3: Create the block graph using Plotly
+    fig = px.bar(submission_count_distribution,
+                 x='submission_count',
+                 y='author_count',
+                 labels={'submission_count': 'Number of Submissions', 'author_count': 'Number of Authors'},
+                 title='Number of Authors vs. Number of Submissions',
+                 template='plotly_white')
+
+
+    # Update layout for adjusting the font sizes of labels
+    fig.update_layout(
+        title_font_size=24,
+        yaxis_type='log',
+        yaxis_tickvals=[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000,2000],
+        yaxis_ticktext=['1', '2', '5', '10', '20', '50', '100', '200', '500', '1000','2000'],
+        xaxis_title_font_size=20,
+        yaxis_title_font_size=20,
+        xaxis_tickfont_size=14,
+        yaxis_tickfont_size=14,
+        font=dict(
+            size=14,
+            color='black'
+        )
+    )
+
+    # Show the plot
+    fig.write_html(f"./author_submissions_{cluster_num}.html")
+
 
 def unique_per_day(table_name, sql_db, cluster_num):
-
     df = sql_db.sql(f"SELECT created_utc, subreddit, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
     df = df.sort_values(by='created_utc')
     df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
@@ -54,7 +99,7 @@ def unique_per_day(table_name, sql_db, cluster_num):
     merged_df.rename(columns={'submissions': 'submissions', 'author': 'authors', 'subreddit': 'unique subreddits'},
                      inplace=True)
 
-    long_df = merged_df.melt(id_vars='date', value_vars=[ 'submissions', 'authors', 'unique subreddits'],
+    long_df = merged_df.melt(id_vars='date', value_vars=['submissions', 'authors', 'unique subreddits'],
                              var_name='Type', value_name='Count')
     print(long_df.columns)
 
@@ -62,7 +107,7 @@ def unique_per_day(table_name, sql_db, cluster_num):
     fig = px.line(long_df, x='date', y='Count', color='Type',
                   labels={'date': 'Date', 'Count': 'Count'},
                   markers=True,
-                  title='Timeline over George Floyd death',
+                  title="Timeline over George Floyd's death",
                   template='plotly_white')
 
     fig.add_shape(
@@ -70,13 +115,13 @@ def unique_per_day(table_name, sql_db, cluster_num):
         x0='2020-05-25',
         x1='2020-05-25',
         y0=0,
-        y1=(max(entries_per_day['submissions'])+50),
-        line=dict(color='black', width=1)
+        y1=(max(entries_per_day['submissions']) + 50),
+        line=dict(color='black', width=2)
     )
 
     fig.add_annotation(
         x='2020-05-25',
-        y=(max(entries_per_day['submissions'])+50),
+        y=(max(entries_per_day['submissions']) + 50),
         text="George Floyd death",
         showarrow=True,
         arrowhead=2,
@@ -91,6 +136,7 @@ def unique_per_day(table_name, sql_db, cluster_num):
         yaxis_title_font_size=20,
         xaxis_tickfont_size=14,
         yaxis_tickfont_size=14,
+        legend_title=dict(font=dict(size=16), text=''),
         legend=dict(
             x=0,
             y=1,
@@ -107,34 +153,6 @@ def unique_per_day(table_name, sql_db, cluster_num):
     fig.write_html(f"./unique_per_day_{cluster_num}.html")
 
 
-def authors_per_day(table_name, sql_db, cluster_num):
-
-    df = sql_db.sql(f"SELECT created_utc, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-    df = df.sort_values(by='created_utc')
-    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
-    df['date'] = df['created_utc'].dt.date
-    unique_authors_per_day = df.groupby('date')['author'].nunique().reset_index()
-
-    # Plotting the data using Plotly
-    fig = px.line(unique_authors_per_day, x='date', y='author',
-                 labels={'date': 'Date', 'author': 'Number of Unique Authors'},
-                 markers=True,
-                 title='Number of Unique Subreddits per Day',
-                 template='plotly_white')
-
-    # Update layout for adjusting the font sizes of labels
-    fig.update_layout(
-        title_font_size=24,
-        xaxis_title_font_size=20,
-        yaxis_title_font_size=20,
-        xaxis_tickfont_size=14,
-        yaxis_tickfont_size=14
-    )
-
-    # Show the plot
-    fig.write_html(f"./authors_per_day_{cluster_num}.html")
-
-
 def submissions_timeline(table_name, sql_db, cluster_num):
     df = sql_db.sql(f"SELECT created_utc FROM {table_name} Where cluster = {cluster_num}").fetchdf()
 
@@ -148,8 +166,8 @@ def submissions_timeline(table_name, sql_db, cluster_num):
               inplace=True)
 
     # Create the plot using Plotly
-    fig = px.line(df, x='Date', y='Count', labels={'Date': 'Date', 'Count': 'Count'}, title='Cluster Size Over Time', template='plotly_white')
-
+    fig = px.line(df, x='Date', y='Count', labels={'Date': 'Date', 'Count': 'Count'}, title='Cluster Size Over Time',
+                  template='plotly_white')
 
     fig.add_shape(
         type='line',
@@ -169,69 +187,3 @@ def submissions_timeline(table_name, sql_db, cluster_num):
     )
     # Show the plot
     fig.write_html(f"./submissions_timeline_{cluster_num}.html")
-
-
-def subreddit_timeline(table_name, sql_db, cluster_num):
-        df = sql_db.sql(f"SELECT created_utc, subreddit FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-        df = df.sort_values(by='created_utc')
-        df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
-
-
-        # Calculate the cumulative number of unique subreddits over time
-        unique_subreddits = set()
-        cumulative_counts = []
-
-        for _, row in df.iterrows():
-            unique_subreddits.add(row['subreddit'])
-            cumulative_counts.append(len(unique_subreddits))
-
-        df['cumulative_unique_subreddits'] = cumulative_counts
-
-        fig = px.line(df, x='created_utc', y='cumulative_unique_subreddits',
-                      title='Cumulative Number of Unique Subreddits Over Time',
-                      template='plotly_white')
-
-        fig.update_layout(
-            title_font_size=24,
-            xaxis_title_font_size=20,
-            yaxis_title_font_size=20,
-            xaxis_tickfont_size=14,
-            yaxis_tickfont_size=14
-        )
-
-        # Show the plot
-        fig.write_html(f"./subreddit_timeline_{cluster_num}.html")
-
-
-def author_timeline(table_name, sql_db, cluster_num):
-    df = sql_db.sql(f"SELECT created_utc, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
-    df = df.sort_values(by='created_utc')
-    df['created_utc'] = pd.to_datetime(df['created_utc'], unit='s')
-
-
-    # Calculate the cumulative number of unique subreddits over time
-    unique_subreddits = set()
-    cumulative_counts = []
-
-    for _, row in df.iterrows():
-        unique_subreddits.add(row['author'])
-        cumulative_counts.append(len(unique_subreddits))
-
-    df['cumulative_unique_authors'] = cumulative_counts
-
-    fig = px.line(df, x='created_utc', y='cumulative_unique_authors',
-                  title='Cumulative Number of Unique Authors Over Time',
-                  template='plotly_white')
-
-    fig.update_layout(
-        title_font_size=24,
-        xaxis_title_font_size=20,
-        yaxis_title_font_size=20,
-        xaxis_tickfont_size=14,
-        yaxis_tickfont_size=14
-    )
-
-    # Show the plot
-    fig.write_html(f"./unique_author_timeline_{cluster_num}.html")
-
-

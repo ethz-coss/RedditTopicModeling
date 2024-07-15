@@ -7,7 +7,6 @@ def get_tfidf(table_name, sql_db):
     docs = df['document'].tolist()
 
     vectorizer = TfidfVectorizer(stop_words='english')
-    #vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(docs)
     terms = vectorizer.get_feature_names_out()    
     

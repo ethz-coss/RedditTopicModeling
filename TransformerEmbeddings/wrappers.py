@@ -1,4 +1,4 @@
-import cuml
+#import cuml
 import time
 import duckdb
 import numpy as np
@@ -7,7 +7,7 @@ import pandas as pd
 import local
 from sentence_transformers import SentenceTransformer
 
-from steps import db_queries, embeddings, hdbscan, plotting, load_to_db, topic_finding as tf, UMAP_embeddings as um
+from steps import db_queries, embeddings, hdbscan, plotting, load_to_db, topic_finding as tf, UMAP_embeddings as um, plotting as plot
 import config
 
 
@@ -103,6 +103,7 @@ def tfidf_topterms_compute():
     return top_words, sizes_list
 
 
+
 def show_info(top_words, sizes):
     if config.C_or_S == 'S':
         table = 'submissions_info_filtered'
@@ -125,24 +126,42 @@ def show_info(top_words, sizes):
     print('top words of 2. cluster: ', top_words[cl_2 + 1])
 
     cl_2 = blm_rank['cluster'][3]
-    print('size of 2. cluster: ', sizes[cl_2 + 1])
-    print('top words of 2. cluster: ', top_words[cl_2 + 1])
+    print('size of 3. cluster: ', sizes[cl_2 + 1])
+    print('top words of 3. cluster: ', top_words[cl_2 + 1])
 
     print('top subreddits of top cluster: ', tf.get_clusters_subreddit(cl_num, table, duck_database))
 
     print('top clusters of BLM subreddit: ', tf.get_subreddit_clusters('BlackLivesMatter', table, duck_database))
     return cl_num
 
+def do_plots(cl_num):
+    duck_database = duckdb.connect(config.DATA_BASE_PATH)
+
+    info_table = 'submissions_info_filtered'
+
+    tfidf, terms = tf.get_tfidf(info_table, duck_database)
+    top_words = tf.get_top_terms(tfidf, terms)
+    sizes = tf.topic_sizes(info_table, duck_database)
+    sizes = sizes['sizes'].tolist()
+
+    candidates = [cl_num]
+
+    for n in candidates:
+        print('top cluster: ', n)
+        print('size of top cluster: ', sizes[n + 1])
+        print('top words of top cluster: ', top_words[n + 1])
+        print('top subreddits of top cluster: ', tf.get_clusters_subreddit(n, info_table, duck_database))
+        plot.unique_per_day(info_table, duck_database, n)
+        plot.top_subreddits(info_table, duck_database, n)
+        plot.submissions_per_authors(info_table, duck_database, n)
+        plot.check(info_table, duck_database, n)
+
 if __name__ == '__main__':
     extract_filter_load()
-    print('loaded')
     compute_embeddings()
-    print('embedded')
     compute_umap()
-    print('umapped')
     hdbscan_clustering()
-    print('clustered')
-    top_words, sizes_list = tfidf_topterms_compute()
-    print('tfidfed')
-    cl_num = show_info(top_words, sizes_list)
-    local.do_plots(cl_num)
+    top_words, sizes = tfidf_topterms_compute()
+    cl_num = show_info(top_words, sizes)
+    do_plots(cl_num)
+
