@@ -4,7 +4,6 @@ import duckdb
 import numpy as np
 import torch
 import pandas as pd
-import local
 from sentence_transformers import SentenceTransformer
 
 from steps import db_queries, embeddings, hdbscan, plotting, load_to_db, topic_finding as tf, UMAP_embeddings as um, plotting as plot
