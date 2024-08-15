@@ -143,6 +143,9 @@ def do_plots(cl_num):
     sizes = tf.topic_sizes(info_table, duck_database)
     sizes = sizes['sizes'].tolist()
 
+    plot.size_comparison(info_table, duck_database)
+
+    """
     candidates = [cl_num]
 
     for n in candidates:
@@ -154,13 +157,18 @@ def do_plots(cl_num):
         plot.top_subreddits(info_table, duck_database, n)
         plot.submissions_per_authors(info_table, duck_database, n)
         plot.check(info_table, duck_database, n)
+    """
+
+
+
 
 if __name__ == '__main__':
-    extract_filter_load()
-    compute_embeddings()
-    compute_umap()
-    hdbscan_clustering()
-    top_words, sizes = tfidf_topterms_compute()
-    cl_num = show_info(top_words, sizes)
-    do_plots(cl_num)
+    #extract_filter_load()
+    #compute_embeddings()
+    #compute_umap()
+    #hdbscan_clustering()
+    #top_words, sizes = tfidf_topterms_compute()
+    #cl_num = show_info(top_words, sizes)
+    do_plots(0)
+
 

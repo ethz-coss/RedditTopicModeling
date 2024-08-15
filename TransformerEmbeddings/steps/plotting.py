@@ -1,10 +1,97 @@
 import pandas as pd
 import plotly.express as px
+import steps.topic_finding as tf
+import numpy as np
+import statsmodels.api as sm
+
 import duckdb
 
+
+def size_comparison(table_name, sql_db):
+    tfidf, terms = tf.get_tfidf(table_name, sql_db)
+    top_words = tf.get_top_terms(tfidf, terms)
+
+    # full 2 months data
+    df = sql_db.sql(f"SELECT cluster, Count(*) as total FROM {table_name} "
+                    f"Where cluster != -1 GROUP BY cluster ORDER BY total DESC").fetchdf()
+
+    df['Graph'] = range(1, len(df) + 1)
+
+    #do log. regression and find alpha
+    log_sizes = np.log(df['total'])
+    log_ranks = np.log(df['Graph'])
+
+    X = sm.add_constant(log_sizes)
+
+    model = sm.OLS(log_ranks, X)
+    results = model.fit()
+
+    alpha = results.params[1]
+    beta = results.params[0]
+
+    # Print the results
+    print(f"Alpha (slope): {alpha}")
+    print(f"Beta (intercept): {beta}")
+    print(results.summary())
+
+    #plot ranking
+    fig = px.line(df, x='Graph', y='total',
+                  labels={'Graph': 'Rank', 'total': 'Size'},
+                  markers=True,
+                  title='2 Month Cluster Size Distribution',
+                  hover_data={'cluster': True},
+                  template='plotly_white')
+
+    fig.update_layout(
+        title_font_size=30,
+        yaxis_type='log',
+        xaxis_type='log',
+        xaxis_title_font_size=30,
+        yaxis_title_font_size=30,
+        xaxis_tickfont_size=25,
+        yaxis_tickfont_size=25,
+        font=dict(
+            size=25,
+            color='black'
+        )
+    )
+
+    fig.write_html(f"./sizes_plot_2M.html")
+
+    #repeat plotting for smaller timeframe
+    df = sql_db.sql(f"SELECT cluster, Count(*) as total FROM {table_name} "
+                    f"Where cluster != -1 AND created_utc > 1590425826 AND created_utc < 1592006399 "
+                    f"GROUP BY cluster ORDER BY total DESC").fetchdf()
+    df['Graph'] = range(1, len(df) + 1)
+
+    fig = px.line(df, x='Graph', y='total',
+                  labels={'Graph': 'Rank', 'total': 'Size'},
+                  markers=True,
+                  title='Hype Phase Cluster Size Distribution',
+                  hover_data={'cluster': True},
+                  template='plotly_white')
+
+    fig.update_layout(
+        title_font_size=30,
+        yaxis_type='log',
+        xaxis_type='log',
+        xaxis_title_font_size=30,
+        yaxis_title_font_size=30,
+        xaxis_tickfont_size=25,
+        yaxis_tickfont_size=25,
+        font=dict(
+            size=25,
+            color='black'
+        )
+    )
+
+    fig.write_html(f"./sizes_plot_HP.html")
+
 def check(table_name, sql_db, cluster_num):
-    df = sql_db.sql(f"SELECT COUNT(*) AS total, author FROM {table_name} Where cluster = {cluster_num} GROUP BY author ORDER BY total DESC ").fetchdf()
+    df = sql_db.sql(
+        f"SELECT COUNT(*) AS total, author FROM {table_name} Where cluster = {cluster_num} GROUP BY author ORDER BY total DESC ").fetchdf()
     print(df)
+
 
 def top_subreddits(table_name, sql_db, cluster_num):
     df = sql_db.sql(f"SELECT subreddit, author FROM {table_name} Where cluster = {cluster_num}").fetchdf()
@@ -13,8 +100,8 @@ def top_subreddits(table_name, sql_db, cluster_num):
     subreddit_counts = df['subreddit'].value_counts()
 
     # Separate top 6 subreddits and others
-    top = subreddit_counts.nlargest(20)
-    others = subreddit_counts.iloc[20:].sum()
+    top = subreddit_counts.nlargest(40)
+    others = subreddit_counts.iloc[40:].sum()
 
     # Prepare data for pie chart
     labels = list(top.index) + ['Other']
@@ -27,18 +114,27 @@ def top_subreddits(table_name, sql_db, cluster_num):
         title="Subreddit Distribution"
     )
 
+    t = [f"{v}" for v in values]
     fig.update_traces(
-        text=[f"{v}" for v in values],
+        text=t[:15],
         textinfo='text',
-        hovertemplate='%{label}: %{value} submissions<extra></extra>'
+        hovertemplate='%{label}: %{value} submissions<extra></extra>',
+        textfont_size=25
     )
 
     fig.update_layout(
-        title_font_size=24,
+        title_font_size=25,
         font=dict(
-            size=14,
+            size=25,
             color='black'
-        )
+        ),
+        legend=dict(
+            font=dict(
+                size=30  # Increase the font size of the legend here
+            )
+        ),
+        width=1300,  # Set the desired width of the pie chart
+        height=1000  # Set the desired height of the pie chart
     )
 
     # Show the plot
@@ -46,7 +142,8 @@ def top_subreddits(table_name, sql_db, cluster_num):
 
 
 def submissions_per_authors(table_name, sql_db, cluster_num):
-    df = sql_db.sql(f"SELECT subreddit, author FROM {table_name} Where cluster = {cluster_num} AND author != '[deleted]'").fetchdf()
+    df = sql_db.sql(
+        f"SELECT subreddit, author FROM {table_name} Where cluster = {cluster_num} AND author != '[deleted]'").fetchdf()
 
     author_submission_counts = df['author'].value_counts().reset_index()
     author_submission_counts.columns = ['author', 'submission_count']
@@ -63,19 +160,18 @@ def submissions_per_authors(table_name, sql_db, cluster_num):
                  title='Number of Authors vs. Number of Submissions',
                  template='plotly_white')
 
-
     # Update layout for adjusting the font sizes of labels
     fig.update_layout(
-        title_font_size=24,
+        title_font_size=30,
         yaxis_type='log',
-        yaxis_tickvals=[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000,2000],
-        yaxis_ticktext=['1', '2', '5', '10', '20', '50', '100', '200', '500', '1000','2000'],
-        xaxis_title_font_size=20,
-        yaxis_title_font_size=20,
-        xaxis_tickfont_size=14,
-        yaxis_tickfont_size=14,
+        yaxis_tickvals=[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000],
+        yaxis_ticktext=['1', '2', '5', '10', '20', '50', '100', '200', '500', '1000', '2000'],
+        xaxis_title_font_size=30,
+        yaxis_title_font_size=30,
+        xaxis_tickfont_size=30,
+        yaxis_tickfont_size=30,
         font=dict(
-            size=14,
+            size=20,
             color='black'
         )
     )
@@ -126,25 +222,31 @@ def unique_per_day(table_name, sql_db, cluster_num):
         showarrow=True,
         arrowhead=2,
         ax=0,
-        ay=-40
+        ay=-40,
+        font=dict(
+            size=25  # Increase the font size here
+        )
     )
 
     # Update layout for adjusting the font sizes of labels
     fig.update_layout(
-        title_font_size=24,
-        xaxis_title_font_size=20,
-        yaxis_title_font_size=20,
-        xaxis_tickfont_size=14,
-        yaxis_tickfont_size=14,
-        legend_title=dict(font=dict(size=16), text=''),
+        title_font_size=30,
+        xaxis_title_font_size=30,
+        yaxis_title_font_size=30,
+        xaxis_tickfont_size=25,
+        yaxis_tickfont_size=25,
+        legend_title=dict(font=dict(size=25), text=''),
         legend=dict(
             x=0,
             y=1,
+            font=dict(
+                size=30  # Increase the font size of the legend here
+            ),
             traceorder='normal',
             bgcolor='rgba(0,0,0,0)'
         ),
         font=dict(
-            size=14,
+            size=25,
             color='black'
         )
     )

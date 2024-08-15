@@ -30,6 +30,6 @@ PCA_COMPONENTS = 50
 #HDBS_ALG = ''
 
 
-#TERMS = ['blm', 'Black Lives Matter', 'black lives matter', 'blacklivesmatter', 'BlackLivesMatter', 'BLM', 'racism', 'George', 'Floyd', 'police', 'protest']
-TERMS = ['protest', 'pandemic', 'protestors']
+TERMS = ['blm', 'Black Lives Matter', 'black lives matter', 'blacklivesmatter', 'BlackLivesMatter', 'BLM', 'racism', 'George', 'Floyd', 'police', 'protest']
+#TERMS = ['protest', 'pandemic', 'protestors']
 SUBREDDIT = 'BlackLivesMatter'
