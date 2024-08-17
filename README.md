@@ -1,5 +1,5 @@
 # Reddit Topic Modeling
 
-This repository contains the code for the bachelor thesis of Victoria Beaupoil Montilla. 
+This repository contains code for the bachelor thesis of Victoria Beaupoil Montilla. 
 
 **Abstract**: Social media has revolutionized how we perceive and discuss political events by providing a platform for real-time information sharing and diverse viewpoints. However, it has also brought challenges like rapid hype cycles, leading to brief engagement with political issues. This thesis explores these challenges through a case study of Reddit discussions following George Floyd's death. Using a dataset of submissions from May and June 2020, we employ a computational pipeline with the goal of clustering social media activity by topic. This allows us to complete an analysis which uncovers distinct patterns of growth, author distribution, and topic spread within a discussion point. We manage to highlighting how major events can drive both immediate and sustained social media engagement. Overall, our method effectively captures the dynamics of social media discourse, providing a tool for valuable insights into public opinion and political communication in digital environments. 
